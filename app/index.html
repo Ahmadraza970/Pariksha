@@ -776,7 +776,7 @@ function parseAnswerKey(keyText) {
   const rows = keyText.split('\n').map(r => r.trim()).filter(Boolean);
   for (let i = 0; i + 1 < rows.length; i++) {
     const nums = rows[i].split(/\s+/);
-    const lets = rows[i + 1].split(/\s+/);
+    const lets = rows[i + 1].split(/\s+/).map(v => v.replace(/[()]/g, ''));
     if (nums.length >= 5 && lets.length >= nums.length - 1 &&
         nums.every((v, j) => /^\d{1,3}$/.test(v) && parseInt(v) === parseInt(nums[0]) + j) &&
         lets.slice(0, nums.length).every(v => /^[A-Da-d]$/.test(v))) {
@@ -787,6 +787,19 @@ function parseAnswerKey(keyText) {
   const pairs = [...keyText.matchAll(/(?:^|\s)(\d{1,3})\s+([A-Da-d])(?=\s|$)/g)];
   if (pairs.length >= 3) {
     for (const p of pairs) { const n = parseInt(p[1]); if (!(n in map)) map[n] = { type: 'option', values: [p[2].toUpperCase().charCodeAt(0) - 65] }; }
+  }
+  // Bare-number parenthesised: "1. (A)" / "1) (B)" / "1 (C)" — the standard
+  // Indian book / board solved-paper key format, no "Q" prefix. Multi first:
+  // "20. (B, D)" -> values [1,3].
+  re = /(?:^|\s)(\d{1,3})\s*[\.\)\:\-\=]?\s*\(\s*([A-Da-d](?:\s*,\s*[A-Da-d])+)\s*\)/g;
+  while ((m = re.exec(keyText)) !== null) {
+    const n = parseInt(m[1]);
+    if (!(n in map)) map[n] = { type: 'option', values: m[2].split(',').map(s => s.trim().toUpperCase().charCodeAt(0) - 65) };
+  }
+  re = /(?:^|\s)(\d{1,3})\s*[\.\)\:\-\=]?\s*\(\s*([A-Da-d])\s*\)/g;
+  while ((m = re.exec(keyText)) !== null) {
+    const n = parseInt(m[1]);
+    if (!(n in map)) map[n] = { type: 'option', values: [m[2].toUpperCase().charCodeAt(0) - 65] };
   }
   // Multi-correct first: "Q2 (A, B, C)" -> values [0,1,2]
   re = /Q\s*(\d{1,3})\s*[\.\)\:\=\-]?\s*\(\s*([A-Da-d](?:\s*,\s*[A-Da-d])*)\s*\)/g;
@@ -1091,7 +1104,17 @@ async function sepReadPages(f, statusId) {
     const p = await pdf.getPage(i);
     pg.push(pageToText(await p.getTextContent(), p));
   }
-  return pg;
+  return { pages: pg, pdf };
+}
+// Scanned / photo PDFs (DocScan waghera) me text layer nahi hota — unhe
+// main flow ki tarah OCR se padho (ocrPages + ocrNorm reuse). Text layer
+// wala PDF seedha text se padha jata hai.
+async function sepExtract(f, statusId) {
+  const { pages, pdf } = await sepReadPages(f, statusId);
+  if (pages.join('').trim().length >= 60) return { pages, pdf, ocr: false };
+  sepSetStatus(statusId, '🔍 Ye scanned PDF hai (text nahi mila) — OCR se padh raha hai, thoda time lagega…');
+  const op = (await ocrPages(pdf, 'hin+eng')).map(ocrNorm);
+  return { pages: op, pdf, ocr: true };
 }
 function sepRefresh() {
   const goBtn = $('sepGo');
@@ -1116,8 +1139,16 @@ $('sepQFile').addEventListener('change', async ev => {
   }
   sepSetStatus('sepQStatus', '⏳ Questions PDF padh raha hai…');
   try {
-    const pg = await sepReadPages(f, 'sepQStatus');
-    const res = parseDPP(pg, f.name);
+    const ex = await sepExtract(f, 'sepQStatus');
+    let res = parseDPP(ex.pages, f.name);
+    if (!res.questions.length && ex.pdf) {
+      // Pehla tarika fail — OCR se dobara (text-layer PDF ke ajeeb format
+      // par bhi, aur scanned par Urdu mila kar).
+      sepSetStatus('sepQStatus', '🔍 Ek aur tarike se padh raha hai (OCR)…');
+      const op = (await ocrPages(ex.pdf, ex.ocr ? 'hin+eng+urd' : 'hin+eng')).map(ocrNorm);
+      const res2 = parseDPP(op, f.name);
+      if (res2.questions.length) res = res2;
+    }
     if (!res.questions.length) {
       SEP = null;
       sepSetStatus('sepQStatus', '❌ Is PDF me questions nahi mile (Q1…QN ya 1. 2. 3. numbering + (A)(B)(C)(D) options chahiye).', 'err');
@@ -1134,10 +1165,15 @@ $('sepKFile').addEventListener('change', async ev => {
   const f = ev.target.files[0]; if (!f) return;
   sepSetStatus('sepKStatus', '⏳ Key PDF padh raha hai…');
   try {
-    const pg = await sepReadPages(f, 'sepKStatus');
-    const map = parseAnswerKey(pg.join('\n'));
+    const ex = await sepExtract(f, 'sepKStatus');
+    let map = parseAnswerKey(ex.pages.join('\n'));
+    if (!Object.keys(map).length && ex.pdf && !ex.ocr) {
+      sepSetStatus('sepKStatus', '🔍 Ek aur tarike se padh raha hai (OCR)…');
+      const op = (await ocrPages(ex.pdf, 'hin+eng')).map(ocrNorm);
+      map = parseAnswerKey(op.join('\n'));
+    }
     const count = Object.keys(map).length;
-    if (!count) { sepSetStatus('sepKStatus', '❌ Is PDF me answer key nahi mili. Key is format me honi chahiye: 1-B, 2-A… ya Q1 (B)… — ya neeche "Type karo" se de do.', 'err'); return; }
+    if (!count) { sepSetStatus('sepKStatus', '❌ Is PDF me answer key nahi mili. Key in formats me chalti hai: 1-B, 1. (A), Q1 (B)… — ya neeche "Type karo" se de do.', 'err'); return; }
     if (!SEP) SEP = { questions: null, keyMap: null, keySrc: '' };
     SEP.keyMap = map; SEP.keySrc = 'key PDF';
     sepSetStatus('sepKStatus', `✅ ${count} answers mil gaye is PDF se.`, 'ok');
