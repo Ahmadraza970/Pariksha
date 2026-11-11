@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DPP Mock Test — Turn any DPP into a real mock test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="pdf.min.js"></script>
+<script src="tesseract/tesseract.min.js"></script>
+<script>
+// Fallback CDN if primary fails
+if (typeof pdfjsLib === 'undefined') {
+  document.write('<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"><\/script>');
+}
+</script>
+<style>
+:root {
+  /* Ahmad Studio palette */
+  --paper: #F6F5F1;
+  --paper2: #EDE9DF;
+  --ink: #151515;
+  --ink2: #57534E;
+  --ink3: #A8A29E;
+  --accent: #5B3A29;
+  --accent-d: #40281A;
+  --accent-l: #EFE3D8;
+  --green: #15803D;
+  --green-l: #DCFCE7;
+  --red: #DC2626;
+  --red-l: #FEE2E2;
+  --amber: #B45309;
+  --amber-l: #FEF3C7;
+  --purple: #7C3AED;
+  --purple-l: #EDE9FE;
+  --grey-pal: #E5E7EB;
+  --line: #E8E2D4;
+  --card: #FFFFFF;
+  --shadow: 0 1px 3px rgba(21,21,21,.07), 0 4px 16px rgba(21,21,21,.05);
+  --shadow-lg: 0 4px 12px rgba(21,21,21,.09), 0 16px 48px rgba(21,21,21,.10);
+  --r: 16px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+  background: var(--paper); color: var(--ink);
+  min-height: 100vh; min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+
+/* ===== SCREENS ===== */
+.screen { display: none; max-width: 680px; margin: 0 auto; padding: 20px 16px 64px; }
+.screen.on { display: block; animation: up .35s cubic-bezier(.22,1,.36,1); }
+.screen.wide { max-width: 1080px; }
+@keyframes up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== HEADER / HERO ===== */
+.top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.logo { display: flex; align-items: center; gap: 11px; }
+.logo-mark {
+  width: 42px; height: 42px; border-radius: 13px; background: var(--ink); color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 20px; box-shadow: var(--shadow);
+}
+.logo-name { font-weight: 800; font-size: 19px; letter-spacing: -.4px; }
+.logo-sub { font-size: 11px; color: var(--ink3); font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; }
+.badge { font-size: 12px; font-weight: 700; color: var(--accent-d); background: var(--accent-l); padding: 7px 13px; border-radius: 999px; }
+.hero { margin-bottom: 24px; }
+.hero .kicker { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.hero h1 { font-size: clamp(30px, 8vw, 42px); font-weight: 900; line-height: 1.1; letter-spacing: -1px; margin-bottom: 12px; overflow-wrap: break-word; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { color: var(--ink2); font-size: 15px; line-height: 1.7; }
+.section-title { font-size: 19px; font-weight: 800; margin: 30px 0 4px; letter-spacing: -.3px; }
+.section-sub { color: var(--ink2); font-size: 13px; line-height: 1.6; margin-bottom: 12px; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: block; width: 100%; padding: 16px; border: none; border-radius: 14px;
+  background: var(--ink); color: var(--paper);
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  transition: transform .15s; letter-spacing: .2px; box-shadow: var(--shadow);
+}
+.btn:active { transform: scale(.98); }
+.btn.acc { background: var(--accent); }
+.btn.acc:active { background: var(--accent-d); }
+.btn.line { background: transparent; border: 2px solid var(--line); color: var(--ink); box-shadow: none; margin-top: 10px; }
+.btn.small { width: auto; padding: 10px 18px; font-size: 14px; display: inline-block; }
+.btn:disabled { opacity: .4; }
+.btn.danger { background: var(--red); }
+.linkbtn { background: none; border: none; color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer; padding: 6px 0; }
+.linkbtn.red { color: var(--red); }
+
+/* ===== UPLOAD ===== */
+.upload-card { background: var(--card); border-radius: 22px; padding: 8px; box-shadow: var(--shadow-lg); margin-bottom: 20px; }
+.upload-inner {
+  border: 2px dashed var(--line); border-radius: 16px; padding: 40px 24px; text-align: center;
+  cursor: pointer; transition: all .25s; position: relative; background: var(--paper);
+}
+.upload-inner:hover { border-color: var(--accent); background: #FBF8F2; }
+.upload-inner.drag { border-color: var(--accent); background: var(--accent-l); }
+.u-icon { width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 20px; background: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: var(--shadow); }
+.u-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.u-sub { color: var(--ink2); font-size: 13px; line-height: 1.6; }
+.u-formats { margin-top: 14px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.u-formats span { font-size: 11px; font-weight: 700; color: var(--ink3); border: 1px solid var(--line); padding: 5px 11px; border-radius: 999px; background: var(--paper); }
+#fi { display: block; margin: 16px auto 0; font-size: 13px; font-weight: 600; cursor: pointer; max-width: 100%; }
+.file-info { margin-top: 10px; font-size: 13px; color: var(--ink2); min-height: 18px; word-break: break-all; }
+#upMsg { text-align: center; font-size: 14px; font-weight: 600; margin: 12px 0; min-height: 22px; }
+#upMsg.ok { color: var(--green); } #upMsg.err { color: var(--red); } #upMsg.load { color: var(--accent); }
+
+/* ===== SEPARATE QUESTIONS + KEY ===== */
+.sep-step { font-weight: 800; font-size: 14px; margin: 16px 0 6px; }
+.sep-step:first-of-type { margin-top: 10px; }
+.sep-status { font-size: 13px; font-weight: 600; color: var(--ink2); margin-top: 8px; min-height: 18px; }
+.sep-status.ok { color: var(--green); } .sep-status.err { color: var(--red); }
+.sep-tabs { display: flex; gap: 8px; margin: 10px 0 12px; flex-wrap: wrap; }
+.sep-tab { flex: 1; min-width: 96px; padding: 10px 8px; border-radius: 11px; border: 2px solid var(--line); background: var(--paper); font-size: 13px; font-weight: 700; cursor: pointer; color: var(--ink2); }
+.sep-tab.on { border-color: var(--accent); background: var(--accent-l); color: var(--accent-d); }
+.sep-pane { display: none; } .sep-pane.on { display: block; }
+#sepKText { width: 100%; min-height: 96px; border: 2px solid var(--line); border-radius: 12px; padding: 12px; font-size: 14px; line-height: 1.6; background: var(--paper); color: var(--ink); resize: vertical; }
+#sepKText:focus { outline: none; border-color: var(--accent); }
+.sep-file { display: block; font-size: 13px; font-weight: 600; cursor: pointer; max-width: 100%; margin-top: 4px; }
+
+/* ===== STEPS / CARDS ===== */
+.steps { display: flex; flex-direction: column; }
+.step { display: flex; gap: 14px; padding: 16px 2px; border-bottom: 1px solid var(--line); }
+.step:last-child { border: none; }
+.step-n { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--paper2); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: var(--accent-d); }
+.step-t { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+.step-d { color: var(--ink2); font-size: 13px; line-height: 1.6; }
+.card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 20px; margin-bottom: 14px; }
+.card h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+.card p { color: var(--ink2); font-size: 13px; line-height: 1.65; }
+.note { background: var(--accent-l); border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.65; color: var(--accent-d); margin-bottom: 14px; }
+.warn { background: var(--amber-l); border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.65; color: #7C2D12; margin-bottom: 14px; }
+.warn:empty, .note:empty { display: none; }
+
+/* ===== HISTORY LIST ===== */
+.hist-item { display: flex; align-items: center; gap: 12px; padding: 14px 4px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.hist-item:last-child { border: none; }
+.hist-item .hi-main { flex: 1; min-width: 0; }
+.hist-item .hi-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-item .hi-meta { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+.hist-item .hi-score { font-weight: 800; font-size: 15px; white-space: nowrap; }
+.hist-item .hi-score small { color: var(--ink3); font-weight: 600; font-size: 12px; }
+.empty { color: var(--ink3); font-size: 13px; padding: 10px 2px; }
+
+/* ===== PREVIEW ===== */
+.pv-summary { font-size: 15px; line-height: 1.7; }
+.pv-summary b { font-size: 17px; }
+.pv-title { font-weight: 800; font-size: 17px; margin: 2px 0 8px; line-height: 1.4; }
+.pv-title:empty { display: none; }
+/* Sticky action bar: keeps the summary + primary button visible so the user never has to scroll the whole list to continue. */
+.sticky-bar { position: sticky; top: 0; z-index: 40; background: var(--paper); padding: 10px 0; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+.sticky-row { display: flex; align-items: center; gap: 10px; }
+.sticky-info { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; line-height: 1.5; color: var(--ink2); }
+.sticky-info b { color: var(--ink); font-size: 14px; }
+.sticky-bar .btn { width: auto; white-space: nowrap; flex-shrink: 0; padding: 10px 14px; font-size: 13px; }
+.sticky-err { color: var(--red); font-size: 12px; font-weight: 600; line-height: 1.5; margin-top: 6px; }
+.sticky-err:empty { display: none; }
+.pv-drop { font-size: 13px; color: var(--amber); line-height: 1.7; }
+.pv-drop:empty { display: none; }
+.qedit { border: 2px solid var(--line); border-radius: var(--r); background: var(--card); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.qedit.bad { border-color: var(--red); }
+.qedit-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.qedit-title { font-weight: 800; font-size: 13px; letter-spacing: .4px; }
+.qedit-del { background: none; border: none; color: var(--red); font-weight: 700; font-size: 13px; cursor: pointer; padding: 4px 8px; }
+.qedit label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ink3); margin: 10px 0 5px; }
+.qedit textarea, .qedit input[type=text], .qedit input[type=number], .qedit select {
+  width: 100%; padding: 11px 12px; border: 2px solid var(--line); border-radius: 10px;
+  font-size: 14px; line-height: 1.55; background: var(--paper); color: var(--ink);
+}
+.qedit textarea:focus, .qedit input:focus, .qedit select:focus { outline: none; border-color: var(--accent); }
+.qedit textarea { resize: vertical; min-height: 64px; }
+.opt-edit { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.opt-edit .ol { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; background: var(--paper2); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+.key-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+.key-chip { display: inline-flex; align-items: center; gap: 5px; border: 2px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer; background: var(--paper); }
+.key-chip input { accent-color: var(--accent); }
+.key-chip.on { border-color: var(--accent); background: var(--accent-l); }
+.chk-row { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin-top: 10px; cursor: pointer; }
+.chk-row input { accent-color: var(--accent); width: 17px; height: 17px; }
+.kind-row { display: flex; gap: 8px; }
+.kind-row select { flex: 1; }
+
+/* ===== SETUP ===== */
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ink2); margin-bottom: 7px; }
+.field input[type=text], .field input[type=number] {
+  width: 100%; padding: 14px 16px; border: 2px solid var(--line); border-radius: 12px;
+  font-size: 15px; font-weight: 600; background: var(--card); color: var(--ink);
+}
+.field input:focus { outline: none; border-color: var(--accent); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { border: 2px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 15px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.chip.sel { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.mark-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mark-opt { border: 2px solid var(--line); background: var(--card); border-radius: 14px; padding: 14px; cursor: pointer; }
+.mark-opt.sel { border-color: var(--accent); background: var(--accent-l); }
+.mark-opt .mt { font-weight: 800; font-size: 14px; }
+.mark-opt .ms { font-size: 12px; color: var(--ink2); margin-top: 3px; line-height: 1.5; }
+.custom-mark { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.custom-mark.show { display: grid; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--paper2); }
+.toggle-row:last-child { border: none; }
+.toggle-row .tt { font-weight: 700; font-size: 14px; }
+.toggle-row .ts { font-size: 12px; color: var(--ink2); margin-top: 2px; line-height: 1.5; }
+.toggle-row input { accent-color: var(--accent); width: 20px; height: 20px; flex-shrink: 0; }
+
+/* ===== TEST SCREEN ===== */
+.test-bar {
+  position: sticky; top: 0; z-index: 40; background: var(--paper);
+  padding: 10px 0; margin-bottom: 12px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 10px;
+}
+.test-bar .tb-name { flex: 1; min-width: 0; font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.timer-box { text-align: center; flex-shrink: 0; }
+.timer-box .tv { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+.timer-box .tl { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--ink3); text-transform: uppercase; }
+.timer-box.low .tv { color: var(--red); animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .45; } }
+.pal-btn { flex-shrink: 0; border: 2px solid var(--line); background: var(--card); border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.submit-btn { flex-shrink: 0; background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 13px; font-weight: 800; cursor: pointer; }
+.tabs { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 2px; }
+.tab { flex-shrink: 0; border: 2px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--ink2); }
+.tab.sel { border-color: var(--accent); background: var(--accent); color: #fff; }
+.test-grid { display: grid; grid-template-columns: 1fr 290px; gap: 16px; align-items: start; }
+.qcard { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); padding: 22px 20px; }
+.qmeta { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+.qno { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase; }
+.subj-chip { font-size: 11px; font-weight: 700; background: var(--paper2); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; color: var(--ink2); }
+.multi-chip { font-size: 11px; font-weight: 700; background: var(--purple-l); color: var(--purple); padding: 4px 10px; border-radius: 999px; }
+.qtext { font-size: 17px; line-height: 1.75; font-weight: 500; overflow-wrap: break-word; word-break: break-word; margin-bottom: 18px; }
+.opts { display: flex; flex-direction: column; gap: 10px; }
+.opt {
+  display: flex; align-items: flex-start; gap: 13px; text-align: left; width: 100%;
+  background: var(--card); border: 2px solid var(--line); border-radius: 14px;
+  padding: 14px; cursor: pointer; transition: border-color .15s, background .15s;
+  font-size: 15px; line-height: 1.6; color: var(--ink); box-shadow: var(--shadow);
+  overflow-wrap: break-word; word-break: break-word; min-width: 0;
+}
+.opt .ol { flex-shrink: 0; width: 30px; height: 30px; border-radius: 9px; background: var(--paper2); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+.opt span:last-child { min-width: 0; flex: 1; overflow-wrap: break-word; word-break: break-word; }
+.opt.sel { border-color: var(--ink); background: #FBF7EF; }
+.opt.sel .ol { background: var(--ink); color: var(--paper); }
+.num-wrap { margin-top: 2px; }
+.num-lbl { font-size: 13px; font-weight: 700; color: var(--ink2); margin-bottom: 8px; }
+.num-inp { width: 100%; padding: 16px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); color: var(--ink); font-size: 19px; font-weight: 700; text-align: center; }
+.num-inp:focus { outline: none; border-color: var(--accent); }
+.save-hint { font-size: 12px; color: var(--ink3); margin-top: 14px; line-height: 1.6; }
+.t-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.t-actions .btn { padding: 14px 8px; font-size: 14px; }
+.t-actions .btn.full { grid-column: 1 / -1; }
+.pal-panel { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; position: sticky; top: 76px; }
+.pal-counts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.pal-count { background: var(--paper); border-radius: 10px; padding: 9px 10px; font-size: 12px; font-weight: 600; color: var(--ink2); }
+.pal-count b { font-size: 15px; color: var(--ink); }
+.pal-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+.pal-btn-num {
+  aspect-ratio: 1; border-radius: 9px; border: none; font-size: 13px; font-weight: 800;
+  background: var(--grey-pal); color: var(--ink2); cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.pal-btn-num.cur { outline: 2.5px solid var(--ink); outline-offset: 1px; }
+.pal-btn-num.st-notans { background: var(--red); color: #fff; }
+.pal-btn-num.st-ans { background: var(--green); color: #fff; }
+.pal-btn-num.st-mark { background: var(--purple); color: #fff; }
+.pal-btn-num.st-ansmark { background: var(--purple); color: #fff; }
+.pal-btn-num.st-ansmark::after { content: ''; position: absolute; right: 3px; bottom: 3px; width: 9px; height: 9px; border-radius: 50%; background: var(--green); border: 1.5px solid #fff; }
+.pal-legend { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--ink2); }
+.pal-legend .lg { display: flex; align-items: center; gap: 8px; }
+.lg-dot { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.lg-dot.g { background: var(--grey-pal); } .lg-dot.r { background: var(--red); } .lg-dot.gr { background: var(--green); } .lg-dot.p { background: var(--purple); } .lg-dot.pm { background: var(--purple); position: relative; }
+.lg-dot.pm::after { content: ''; position: absolute; right: 1px; bottom: 1px; width: 6px; height: 6px; border-radius: 50%; background: var(--green); border: 1px solid #fff; }
+
+/* palette drawer (mobile) */
+.drawer-back { display: none; position: fixed; inset: 0; background: rgba(21,21,21,.45); z-index: 60; }
+.drawer-back.on { display: block; }
+.pal-drawer { display: none; }
+@media (max-width: 860px) {
+  .test-grid { grid-template-columns: 1fr; }
+  .pal-panel.desktop { display: none; }
+  .pal-drawer { display: block; position: fixed; top: 0; right: 0; bottom: 0; width: min(320px, 86vw); background: var(--paper); z-index: 61; padding: 20px 16px; overflow-y: auto; transform: translateX(105%); transition: transform .28s ease; box-shadow: var(--shadow-lg); }
+  .pal-drawer.on { transform: translateX(0); }
+  .pal-drawer .pal-panel { position: static; box-shadow: none; background: transparent; padding: 0; }
+}
+@media (min-width: 861px) { .pal-btn { display: none; } }
+
+/* ===== SUBMIT MODAL ===== */
+.modal-back { display: none; position: fixed; inset: 0; background: rgba(21,21,21,.5); z-index: 70; align-items: center; justify-content: center; padding: 20px; }
+.modal-back.on { display: flex; }
+.modal { background: var(--card); border-radius: 20px; padding: 24px; max-width: 420px; width: 100%; box-shadow: var(--shadow-lg); }
+.modal h3 { font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+.modal .m-counts { font-size: 14px; line-height: 2; color: var(--ink2); margin-bottom: 16px; }
+.modal .m-counts b { color: var(--ink); }
+
+/* ===== RESULT ===== */
+.r-hero { text-align: center; padding: 12px 0 6px; }
+.r-kicker { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+.r-score { font-size: 72px; font-weight: 900; letter-spacing: -3px; line-height: 1; }
+.r-score small { font-size: 26px; color: var(--ink3); letter-spacing: 0; font-weight: 700; }
+.r-msg { font-size: 21px; font-weight: 800; margin: 10px 0 4px; }
+.r-sub { color: var(--ink2); font-size: 13px; line-height: 1.6; }
+.r-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 22px 0 6px; }
+.rstat { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 6px; text-align: center; }
+.rstat .n { font-size: 26px; font-weight: 900; }
+.rstat .l { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--ink3); margin-top: 3px; }
+.r-sec { font-size: 17px; font-weight: 800; margin: 24px 0 12px; }
+.time-list { display: flex; flex-direction: column; gap: 0; }
+.time-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.time-row:last-child { border: none; }
+.time-row .tq { color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.time-row .tt2 { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ritem { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 10px; border-left: 5px solid var(--line); }
+.ritem.ok { border-left-color: var(--green); }
+.ritem.no { border-left-color: var(--red); }
+.ritem.sk { border-left-color: var(--amber); }
+.ri-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 8px; }
+.ri-qno { font-size: 12px; font-weight: 800; letter-spacing: .5px; color: var(--ink2); }
+.ri-chip { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.ri-chip.ok { background: var(--green-l); color: var(--green); }
+.ri-chip.no { background: var(--red-l); color: var(--red); }
+.ri-chip.sk { background: var(--amber-l); color: var(--amber); }
+.ri-q { font-weight: 600; font-size: 14px; line-height: 1.6; margin-bottom: 9px; overflow-wrap: break-word; word-break: break-word; }
+.ri-opts { font-size: 12px; color: var(--ink3); margin-bottom: 8px; line-height: 1.7; overflow-wrap: break-word; word-break: break-word; }
+.ri-a { font-size: 13px; font-weight: 600; line-height: 1.6; }
+.ri-a.ok { color: var(--green); } .ri-a.no { color: var(--red); } .ri-a.sk { color: var(--amber); }
+.ri-time { font-size: 11px; color: var(--ink3); margin-top: 6px; }
+.r-actions { display: flex; flex-direction: column; gap: 0; margin-top: 22px; }
+.hide { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HOME ═══════════ -->
+<div class="screen on" id="sc-home">
+  <div class="top">
+    <div class="logo"><div class="logo-mark">D</div><div><div class="logo-name">DPP Mock Test</div><div class="logo-sub">Upload · Test · Analyse</div></div></div>
+    <div class="badge">✦ Free</div>
+  </div>
+  <div class="hero">
+    <div class="kicker">JEE · NEET · Boards</div>
+    <h1>Turn any DPP into a <em>real mock test</em></h1>
+    <p>Upload your DPP PDF — answer key on the last page. It becomes a timed, NTA-style test with a question palette, marking and instant analysis.</p>
+  </div>
+
+  <div class="card hide" id="resumeCard">
+    <h3>▶️ Test in progress</h3>
+    <p id="resumeMeta">–</p>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn acc small" id="btnResume">Resume test</button>
+      <button class="btn line small" id="btnDiscardResume" style="margin-top:0">Discard</button>
+    </div>
+  </div>
+
+  <div class="upload-card">
+    <div class="upload-inner" id="dz">
+      <div class="u-icon">📄</div>
+      <div class="u-title">Drop your DPP here</div>
+      <div class="u-sub">or tap to choose a file<br>Answer key should be on the last page</div>
+      <div class="u-formats"><span>PDF only</span><span>Q1…QN format</span><span>(A)(B)(C)(D)</span><span>Hindi · English · اردو</span></div>
+      <input type="file" id="fi" accept=".pdf,application/pdf">
+      <div class="file-info" id="fileInfo">No file chosen yet</div>
+    </div>
+  </div>
+  <div id="upMsg"></div>
+  <button class="btn line" id="ocrBtn" style="display:none">🔍 Read this PDF with OCR (Hindi · English · اردو)</button>
+
+  <div class="card" id="sepCard">
+    <h3>🧩 Questions aur answer key alag-alag hai?</h3>
+    <p class="section-sub" style="margin-bottom:4px">Questions ek PDF me aur answer key dusri jagah hai? Koi baat nahi — pehle questions add karo, phir answer key alag se do. Key do tarike se de sakte ho: <b>PDF upload</b> karke, ya <b>type</b> karke.</p>
+
+    <div class="sep-step">Step 1 · Questions PDF</div>
+    <input type="file" class="sep-file" id="sepQFile" accept=".pdf,application/pdf">
+    <div class="sep-status" id="sepQStatus">Pehle questions wali PDF chuno.</div>
+
+    <div class="sep-step">Step 2 · Answer key (alag se)</div>
+    <div class="sep-tabs">
+      <button type="button" class="sep-tab on" id="sepTabPdf">📄 Key PDF</button>
+      <button type="button" class="sep-tab" id="sepTabType">⌨️ Type karo</button>
+    </div>
+    <div class="sep-pane on" id="sepPanePdf">
+      <input type="file" class="sep-file" id="sepKFile" accept=".pdf,application/pdf">
+      <div class="sep-status" id="sepKStatus">Answer key wali PDF chuno — key usi se padh li jayegi.</div>
+    </div>
+    <div class="sep-pane" id="sepPaneType">
+      <textarea id="sepKText" placeholder="Yahan key type ya paste karo — jaise:&#10;1-B 2-A 3-D 4-C&#10;ya Q1 (B), Q2 (A)…&#10;Numeric answer: Q5 (42)"></textarea>
+      <div class="sep-status" id="sepTStatus">0 answers mile.</div>
+    </div>
+    <div class="sep-status" id="sepStatus"></div>
+    <button class="btn acc" id="sepGo" disabled style="margin-top:10px">Key lagao aur preview dekho →</button>
+  </div>
+  <div id="ocrProg" class="file-info" style="display:none"></div>
+
+  <div class="section-title">How it works</div>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div><div class="step-t">Upload DPP</div><div class="step-d">Questions and the answer key are read automatically — Hindi, English and Urdu.</div></div></div>
+    <div class="step"><div class="step-n">2</div><div><div class="step-t">Check &amp; fix</div><div class="step-d">Preview every question, fix anything misread, set the key — then start.</div></div></div>
+    <div class="step"><div class="step-n">3</div><div><div class="step-t">Take the test</div><div class="step-d">NTA-style timer, palette and marking. Score, accuracy and time analysis at the end.</div></div></div>
+  </div>
+
+  <div class="section-title">Your tests</div>
+  <div class="section-sub">Saved on this device only. Tap any test to see its result again.</div>
+  <div id="histList"></div>
+  <button class="linkbtn" id="btnViewAll">View all history →</button>
+
+  <div class="note" style="margin-top:22px">🔒 <b>Private by design.</b> Your PDFs and answers never leave this device. No account, no server, no upload — everything is read and scored inside your browser.</div>
+</div>
+
+<!-- ═══════════ PREVIEW ═══════════ -->
+<div class="screen" id="sc-preview">
+  <div class="top">
+    <div class="logo"><div class="logo-mark">D</div><div><div class="logo-name">DPP Mock Test</div><div class="logo-sub">Step 2 · Check &amp; fix</div></div></div>
+  </div>
+  <div class="sticky-bar">
+    <div class="sticky-row">
+      <div class="sticky-info" id="pvStickyInfo">–</div>
+      <button class="btn acc" id="btnToSetupTop">Continue to setup →</button>
+    </div>
+    <div class="sticky-err" id="pvStickyErr"></div>
+  </div>
+  <div class="card">
+    <h3>📋 Paper read</h3>
+    <div class="pv-title" id="pvTitle" dir="auto"></div>
+    <div class="pv-summary" id="pvSummary">–</div>
+    <div class="pv-drop" id="pvDropped"></div>
+  </div>
+  <div class="warn" id="pvWarn"></div>
+  <div class="note">✏️ Fix anything wrong below — a wrong question or key here means a wrong score later. Tap a question, option or key to edit it. Delete bad ones.</div>
+  <div id="pvList"></div>
+  <button class="btn line" id="btnAddQ">+ Add question manually</button>
+  <div style="height:14px"></div>
+  <button class="btn acc" id="btnToSetup">Continue to setup →</button>
+  <button class="btn line" id="btnBackHome">← Upload a different PDF</button>
+  <div id="pvErr" style="color:var(--red);font-size:13px;font-weight:600;text-align:center;margin-top:10px;min-height:18px"></div>
+</div>
+
+<!-- ═══════════ SETUP ═══════════ -->
+<div class="screen" id="sc-setup">
+  <div class="top">
+    <div class="logo"><div class="logo-mark">D</div><div><div class="logo-name">DPP Mock Test</div><div class="logo-sub">Step 3 · Test setup</div></div></div>
+  </div>
+  <div class="sticky-bar">
+    <div class="sticky-row">
+      <div class="sticky-info" id="suStickyInfo">–</div>
+      <button class="btn acc" id="btnStartTestTop">Start test →</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label>Test name</label>
+      <input type="text" id="suName" maxlength="80">
+    </div>
+    <div class="field">
+      <label>Total time (minutes)</label>
+      <input type="number" id="suTime" min="1" max="600" step="1">
+      <div class="chips" id="suChips" style="margin-top:10px">
+        <button class="chip" data-m="15">15 min</button>
+        <button class="chip" data-m="30">30 min</button>
+        <button class="chip" data-m="45">45 min</button>
+        <button class="chip" data-m="60">1 hr</button>
+        <button class="chip" data-m="90">1.5 hr</button>
+        <button class="chip" data-m="180">3 hr</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Marking scheme</label>
+      <div class="mark-grid" id="suMarks">
+        <div class="mark-opt sel" data-c="4" data-w="1"><div class="mt">JEE / NEET</div><div class="ms">+4 correct · −1 wrong</div></div>
+        <div class="mark-opt" data-c="1" data-w="0"><div class="mt">Board</div><div class="ms">+1 correct · no negative</div></div>
+        <div class="mark-opt" data-c="1" data-w="0.25"><div class="mt">DPP</div><div class="ms">+1 correct · −0.25 wrong</div></div>
+        <div class="mark-opt" data-c="x" data-w="x"><div class="mt">Custom</div><div class="ms">Set your own marks</div></div>
+      </div>
+      <div class="custom-mark" id="suCustom">
+        <div><label style="font-size:11px;font-weight:700;color:var(--ink2)">CORRECT (+)</label><input type="number" id="suCorrect" min="0" step="0.25" value="4"></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--ink2)">WRONG (−)</label><input type="number" id="suWrong" min="0" step="0.25" value="1"></div>
+      </div>
+    </div>
+    <div class="toggle-row"><div><div class="tt">Shuffle questions</div><div class="ts">Question order is randomised at the start.</div></div><input type="checkbox" id="suShufQ"></div>
+    <div class="toggle-row"><div><div class="tt">Shuffle options</div><div class="ts">A/B/C/D order is randomised (the key follows the right option).</div></div><input type="checkbox" id="suShufO"></div>
+  </div>
+  <div class="note" id="suSummary">–</div>
+  <button class="btn acc" id="btnStartTest">Start test →</button>
+  <button class="btn line" id="btnBackPreview">← Back to preview</button>
+</div>
+
+<!-- ═══════════ TEST ═══════════ -->
+<div class="screen wide" id="sc-test">
+  <div class="test-bar">
+    <div class="tb-name" id="tName">Test</div>
+    <div class="timer-box" id="tTimerBox"><div class="tv" id="tTimer">00:00</div><div class="tl">Time left</div></div>
+    <button class="pal-btn" id="palToggle">☰ Palette</button>
+    <button class="submit-btn" id="tSubmit">Submit</button>
+  </div>
+  <div class="tabs" id="tTabs"></div>
+  <div class="test-grid">
+    <div>
+      <div class="qcard">
+        <div class="qmeta"><span class="qno" id="tQNo">Question 1</span><span class="subj-chip" id="tSubj">General</span><span class="multi-chip hide" id="tMulti">Select all that apply</span></div>
+        <div class="qtext" id="tQText" dir="auto"></div>
+        <div class="opts" id="tOpts"></div>
+        <div class="save-hint">⚠️ Your answer is saved only when you press <b>Save &amp; Next</b> (or <b>Mark for Review &amp; Next</b>). Jumping with the palette does not save it.</div>
+      </div>
+      <div class="t-actions">
+        <button class="btn line" id="btnPrev">← Previous</button>
+        <button class="btn line" id="btnClear">Clear response</button>
+        <button class="btn line" id="btnMark">Mark for Review &amp; Next</button>
+        <button class="btn acc" id="btnSave">Save &amp; Next →</button>
+      </div>
+    </div>
+    <div class="pal-panel desktop" id="palDesktop"></div>
+  </div>
+</div>
+<div class="drawer-back" id="drawerBack"></div>
+<div class="pal-drawer" id="palDrawer">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <b style="font-size:16px">Question palette</b>
+    <button class="linkbtn" id="palClose">✕ Close</button>
+  </div>
+  <div id="palMobile"></div>
+</div>
+
+<!-- submit confirm modal -->
+<div class="modal-back" id="submitModal">
+  <div class="modal">
+    <h3>Submit the test?</h3>
+    <div class="m-counts" id="smCounts"></div>
+    <button class="btn acc" id="btnConfirmSubmit">Submit test ✓</button>
+    <button class="btn line" id="btnCancelSubmit">Keep solving</button>
+  </div>
+</div>
+
+<!-- ═══════════ RESULT ═══════════ -->
+<div class="screen" id="sc-result">
+  <div class="top">
+    <div class="logo"><div class="logo-mark">D</div><div><div class="logo-name">DPP Mock Test</div><div class="logo-sub">Result</div></div></div>
+  </div>
+  <div class="note hide" id="rSavedNote">📂 You are viewing a saved result from your history.</div>
+  <div class="r-hero">
+    <div class="r-kicker" id="rTestName">Test</div>
+    <div class="r-score"><span id="rScore">0</span><small id="rMax"> / 0</small></div>
+    <div class="r-msg" id="rMsg"></div>
+    <div class="r-sub" id="rSub"></div>
+  </div>
+  <div class="r-stats">
+    <div class="rstat"><div class="n" style="color:var(--green)" id="rOk">0</div><div class="l">Correct</div></div>
+    <div class="rstat"><div class="n" style="color:var(--red)" id="rNo">0</div><div class="l">Wrong</div></div>
+    <div class="rstat"><div class="n" style="color:var(--amber)" id="rSk">0</div><div class="l">Skipped</div></div>
+    <div class="rstat"><div class="n" id="rUn">0</div><div class="l">No key</div></div>
+    <div class="rstat"><div class="n" id="rAcc">0%</div><div class="l">Accuracy</div></div>
+    <div class="rstat"><div class="n" style="color:var(--red)" id="rLost">0</div><div class="l">Marks lost</div></div>
+    <div class="rstat"><div class="n" id="rTime">0:00</div><div class="l">Total time</div></div>
+    <div class="rstat"><div class="n" id="rAvg">0s</div><div class="l">Avg / question</div></div>
+    <div class="rstat"><div class="n" id="rPct">0%</div><div class="l">Score %</div></div>
+  </div>
+  <div class="r-sec">⏱ Time per question</div>
+  <div class="card" style="padding:14px 18px">
+    <div style="font-size:12px;font-weight:800;letter-spacing:1px;color:var(--ink3);text-transform:uppercase;margin-bottom:4px">Slowest</div>
+    <div class="time-list" id="rSlow"></div>
+    <div style="font-size:12px;font-weight:800;letter-spacing:1px;color:var(--ink3);text-transform:uppercase;margin:12px 0 4px">Fastest</div>
+    <div class="time-list" id="rFast"></div>
+  </div>
+  <div class="r-sec">Review answers</div>
+  <div id="rList"></div>
+  <div class="r-actions">
+    <button class="btn acc" id="btnRetake">↻ Retake (same order)</button>
+    <button class="btn line" id="btnRetakeShuf">↻ Retake shuffled</button>
+    <button class="btn line" id="btnRetryWrong">↻ Retry only the wrong ones</button>
+    <button class="btn line" id="btnHome2">← Back to home</button>
+  </div>
+</div>
+
+<!-- ═══════════ HISTORY ═══════════ -->
+<div class="screen" id="sc-history">
+  <div class="top">
+    <div class="logo"><div class="logo-mark">D</div><div><div class="logo-name">DPP Mock Test</div><div class="logo-sub">History</div></div></div>
+  </div>
+  <div class="section-title">All tests</div>
+  <div class="section-sub">Saved on this device only. Tap any test to see its result again.</div>
+  <div id="histFull"></div>
+  <button class="btn line danger" id="btnClearHist" style="color:var(--red)">Clear all history</button>
+  <button class="btn line" id="btnBackHome2">← Back to home</button>
+</div>
+
+<script>
+'use strict';
+if (typeof pdfjsLib !== 'undefined')
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
+
+const $ = id => document.getElementById(id);
+const SCR = ['sc-home','sc-preview','sc-setup','sc-test','sc-result','sc-history'];
+const go = id => { SCR.forEach(s => $(s).classList.remove('on')); $(id).classList.add('on'); window.scrollTo(0,0); };
+const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtTime = s => { s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), ss=s%60; return h? `${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}` : `${m}:${String(ss).padStart(2,'0')}`; };
+const SUBJECTS = ['Physics','Chemistry','Maths','Biology'];
+const normSubj = s => /math/i.test(s) ? 'Maths' : s.charAt(0).toUpperCase()+s.slice(1).toLowerCase();
+
+/* ══════════ PARSER (proven on the real DPP, 26 Oct 2026) ══════════
+   Reused from the fixed Pariksha app, with one change: extract() is now
+   parseDPP(pages, fileName) and returns a plain object — it writes to no
+   globals. Added: subject detection, paper title, numeric questions without
+   a key are kept (key can be added in the preview), image/graph questions
+   are dropped with a reason instead of silently vanishing. */
+function pageToText(tc, page) {
+  const vx = page.view, mid = vx[0] + (vx[2] - vx[0]) / 2;
+  // RTL page (Urdu/Arabic): the page holds presentation-form glyphs.
+  const pageRTL = (tc.items || []).some(it => it.str && /[\uFB50-\uFDFF\uFE70-\uFEFF]/.test(it.str));
+  const cols = [[], []];
+  for (const it of tc.items) {
+    if (!it.str) continue;
+    if (!it.str.trim()) {
+      if (it.str.indexOf(' ') >= 0)
+        (it.transform[4] < mid ? cols[0] : cols[1]).push({ str: ' ', transform: it.transform, height: it.height || 10, width: it.width || 0, space: true });
+      continue;
+    }
+    (it.transform[4] < mid ? cols[0] : cols[1]).push(it);
+  }
+  const fixI = s => s.replace(/^\u093F([\u0915-\u0939](?:\u094D[\u0915-\u0939])*)/, '$1\u093F');
+  const colText = col => {
+    col.sort((a, b) => (b.transform[5] - a.transform[5]) || (a.transform[4] - b.transform[4]));
+    const lines = []; let cur = [], curY = null, curH = 10;
+    for (const it of col) {
+      const y = it.transform[5], h = it.height || 10;
+      if (curY === null || Math.abs(curY - y) <= 0.55 * Math.max(curH, h)) {
+        cur.push(it); curY = curY === null ? y : Math.max(curY, y); curH = Math.max(curH, h);
+      } else { lines.push(cur); cur = [it]; curY = y; curH = h; }
+    }
+    if (cur.length) lines.push(cur);
+    return lines.map(line => {
+      const s = line.slice().sort((a, b) => a.transform[4] - b.transform[4]);
+      // RTL visual-order line (Urdu/Arabic PDFs from Chrome print-to-PDF):
+      // Chrome emits Arabic text as presentation-form glyphs in DISPLAY
+      // (left-to-right) order. A Latin option line on an RTL page
+      // ("CO2 (A)") is laid out with its marker at the visual end, so
+      // it reverses too. Logically-ordered Urdu PDFs (Word/Google Docs)
+      // have no presentation forms and are untouched.
+      const lineStr = s.map(it => it.str || '').join('');
+      const rtl = pageRTL && (/[\uFB50-\uFDFF\uFE70-\uFEFF]/.test(lineStr) || /\([A-Da-d]\)/.test(lineStr));
+      if (!rtl) {
+        let out = '';
+        for (let i = 0; i < s.length; i++) {
+          const it = s[i];
+          if (it.space) { if (out && !/\s$/.test(out)) out += ' '; continue; }
+          if (i > 0) {
+            const p = s[i - 1], h = it.height || p.height || 10;
+            const gap = it.transform[4] - (p.transform[4] + (p.width || 0));
+            if (!/\s$/.test(out) && (gap > 0.12 * h || /\s$/.test(p.str))) out += ' ';
+          }
+          out += fixI(it.str);
+        }
+        return out;
+      }
+      // RTL: group items into runs (words) split by space items or gaps,
+      // reverse the RUN order, and reverse the items inside Arabic runs
+      // only. Latin/digit runs (CO2, 108×3) keep their internal order;
+      // multi-char items ("रो", the "ال" lam-alef ligature) are already
+      // in logical order inside, so they survive as units.
+      const runs = []; let cur = [];
+      for (const it of s) {
+        if (it.space) { if (cur.length) runs.push(cur); cur = []; continue; }
+        if (cur.length) {
+          const p = cur[cur.length - 1], h = it.height || p.height || 10;
+          const gap = it.transform[4] - (p.transform[4] + (p.width || 0));
+          if (gap > 0.12 * h || /\s$/.test(p.str)) { runs.push(cur); cur = []; }
+        }
+        cur.push(it);
+      }
+      if (cur.length) runs.push(cur);
+      const outRuns = runs.slice().reverse().map(run => {
+        const arabic = run.some(it => it.str && /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(it.str));
+        const items = arabic ? run.slice().reverse() : run;
+        let t = items.map(it => fixI(it.str)).join('');
+        // NFKC turns presentation forms back into base letters; mirror
+        // brackets (the visual "(" is the logical ")") — only for the
+        // Arabic runs that were actually reversed, never for Latin runs
+        // like "(A)".
+        if (arabic) t = t.normalize('NFKC').replace(/\(/g, '\uE000').replace(/\)/g, '(').replace(/\uE000/g, ')');
+        return t;
+      });
+      return outRuns.join(' ');
+    }).join('\n');
+  };
+  return colText(cols[0]) + '\n' + colText(cols[1]);
+}
+function cleanText(t) {
+  // NOTE: the old version deleted the space between a letter and the next
+  // letter/digit ("SI unit of energy" became "SIunitofenergy"). Never do that.
+  const NUL = String.fromCharCode(0);
+  t = String(t || '');
+  // Skia/Chrome emit U+FFFD for some unmapped glyphs; treat them like NUL.
+  t = t.replace(/\uFFFD/g, NUL);
+  // Normalise composed forms (nukta): ड+़ -> ड़, so "बड़े" reads as "बड़े".
+  t = t.normalize('NFC');
+  // Cut question/option text at the first junk marker (footer/header text
+  // that leaks mid-line, where the whole-line filter cannot catch it).
+  const JUNK_CUT = [/Directions\s*\(\d+\s*-\s*\d+\)/i, /Master NCERT with PW Books APP/i, /Arjuna JEE Hindi 2\.0 2027/i, /JEE Replica Practice Sheet/i, /\s*\d+\.\d+\s+20\d\d\b[^\n]*/];
+  for (const re of JUNK_CUT) { const m = t.search(re); if (m >= 0) t = t.slice(0, m); }
+  t = t.replace(/\s+/g, ' ');
+  // ---- dictionary repair for Devanagari ligatures pdf.js cannot read ----
+  // A key holds NUL where the font lost a glyph. Keys match whole-word
+  // (longer first); NUL in a key matches \s*NUL\s* so a stray fragment
+  // still attaches. cleanText.repaired counts the NULs repaired.
+  const REPAIR = [
+    ['प्रदशि\u0000त', 'प्रदर्शित'], ['गुरुत्वाकष\u0000ण', 'गुरुत्वाकर्षण'], ['निम्नलि\u0000खत', 'निम्नलिखित'], ['सं\u0000ात्मक', 'संख्यात्मक'], ['साव\u0000त्रिक', 'सार्वत्रिक'], ['प्रकाशवष\u0000', 'प्रकाशवर्ष'], ['माइ\u0000ॉन', 'माइक्रॉन'], ['सं\u0000ा', 'संख्या'], ['ल\u0000ाई', 'लम्बाई'], ['प\u0000रमाण', 'परिमाण'], ['प\u0000रणाम', 'परिणाम'], ['निवा\u0000त', 'निर्वात'], ['फम\u0000', 'फर्मी'], ['सूय\u0000', 'सूर्य'], ['पृ\u0000ी', 'पृथ्वी'], ['ऊजा\u0000', 'ऊर्जा'], ['इनम\u0000', 'इनमें'], ['\u0000ात', 'ज्ञात'], ['\u0000ाफ', 'ग्राफ'], ['\u0000ान', 'ज्ञान'], ['\u0000ा', 'क्या'], ['म\u0000', 'में'],
+    ['मु\u0000', 'मुख्य'], ['वि\u0000ान', 'विज्ञान'], ['अ\u0000ात', 'अज्ञात'], ['वष\u0000', 'वर्ष'], ['काय\u0000', 'कार्य'], ['पूव\u0000', 'पूर्व'], ['ल\u0000बा', 'लम्बा'], ['प\u0000रवार', 'परिवार'], ['प\u0000रधि', 'परिधि'], ['जिसम\u0000', 'जिसमें'], ['किसम\u0000', 'किसमें'], ['उसम\u0000', 'उसमें'], ['हम\u0000', 'हमें'], ['तुम्ह\u0000', 'तुम्हें'], ['उन्ह\u0000', 'उन्हें'], ['इन्ह\u0000', 'इन्हें'], ['\u0000ह', 'ग्रह'], ['\u0000ाम', 'ग्राम'],
+    ['\u0000\u0000रांक', 'स्थिरांक'], ['\u0000\u0000रांकों', 'स्थिरांकों'], ['\u0000\u0000क \u0000\u0000रांक (h)', 'प्लांक स्थिरांक (h)'], ['\u0000ारा', 'द्वारा'], ['सकते ह\u0000', 'सकते हैं'], ['करते ह\u0000', 'करते हैं'], ['जाते ह\u0000', 'जाते हैं'], ['होते ह\u0000', 'होते हैं'], ['ह\u0000।', 'हैं।'], ['ह\u0000:', 'हैं:'], ['वण\u0000न', 'वर्णन'], ['वगा\u0000कार', 'वर्गाकार'], ['अव\u0000ा', 'अवस्था'], ['\u0000ीफन', 'स्टीफन'], ['कैलीपस\u0000', 'कैलीपर्स'], ['इले\u0000\u0000ॉ न', 'इलेक्ट्रॉन'], ['राशियाँ जि\u0000\u0000', 'राशियाँ जिन्हें'],
+    ['ऊ\u0000ा', 'ऊष्मा'], ['निभ\u0000र', 'निर्भर'], ['निभ\u0000रता', 'निर्भरता'], ['वि\u0000ाथ\u0000', 'विद्यार्थी'], ['वि\u0000ोट', 'विस्फोट'], ['साथ\u0000क', 'सार्थक'], ['दशा\u0000ए', 'दर्शाए'], ['दशा\u0000ता', 'दर्शाता'], ['प\u0000रभाषित', 'परिभाषित'], ['पा\u0000ांक', 'पाठ्यांक'], ['पूणा\u0000क', 'पूर्णांक'], ['पूणा\u0000कित', 'पूर्णांकित'], ['वनि\u0000यर', 'वर्नियर'], ['श\u0000क्त', 'शक्ति']
+  ];
+  const REPAIR_WORD = [
+    ['पूणाकित', 'पूर्णांकित'], ['पूणांक', 'पूर्णांक'], ['आवतकाल', 'आवर्तकाल'], ['निभरता', 'निर्भरता'], ['विाथ', 'विद्यार्थी'], ['पाांक', 'पाठ्यांक'], ['परभाषित', 'परिभाषित'], ['निभर', 'निर्भर'], ['साथक', 'सार्थक'], ['इसिलए', 'इसलिए'], ['चािहए', 'चाहिए'], ['लिखत', 'लिखित'], ['दशाए', 'दर्शाए'], ['दशाता', 'दर्शाता'], ['वििध', 'विधि'], ['िविध', 'विधि'], ['यिद', 'यदि'], ['गित', 'गति'], ['गितज', 'गतिज'], ['आवत', 'आवर्त'], ['विोट', 'विस्फोट'], ['पदाथ', 'पदार्थ'], ['संदभ', 'संदर्भ'], ['शक्त', 'शक्ति'], ['स्के', 'स्केल'], ['लिपर्स', 'लीपर्स'], ['त्रिा', 'त्रिज्या'], ['ूगेज', 'स्क्रूगेज'], ['वनियर', 'वर्नियर'], ['ऊजा', 'ऊर्जा'], ['ऊा', 'ऊष्मा'], ['पूण', 'पूर्ण']
+  ];
+  const REPAIR_SPLIT = [
+    ['दू सरी', 'दूसरी'], ['दू री', 'दूरी'], ['शू न्य', 'शून्य'], ['व्यु त्पन्न', 'व्युत्पन्न'], ['समु च्चय', 'समुच्चय'], ['न्यू टन', 'न्यूटन'], ['प्रवे श', 'प्रवेश'], ['विमामूल', 'विमा मूल'],
+    ['गु रु त्वा कष\u0000ण', 'गुरुत्वाकर्षण'], ['गु रु त्वा कषण', 'गुरुत्वाकर्षण'], ['गु रु त्वीय', 'गुरुत्वीय'], ['गु रु त्वी य', 'गुरुत्वीय'], ['निम्न लि\u0000खत', 'निम्नलिखित'], ['सं ख\u0000\u0000या', 'संख्या'], ['प्र काश', 'प्रकाश'], ['स मीकरण', 'समीकरण'], ['कि या', 'किया'], ['प्र वाहित', 'प्रवाहित'], ['क्षे त्रफल', 'क्षेत्रफल'], ['क्षे त्र', 'क्षेत्र'], ['वृ त्ती य', 'वृत्तीय'], ['मु ख्य', 'मुख्य'], ['शू न्यां क', 'शून्यांक'], ['प्रा प्त', 'प्राप्त'], ['प्र तिनिधि त्व', 'प्रतिनिधित्व'], ['प्र तिरोधों', 'प्रतिरोधों'], ['प्र तिरोध', 'प्रतिरोध'], ['प्र णाली', 'प्रणाली'], ['क्रां तिक', 'क्रांतिक'], ['व्यं जक', 'व्यंजक'], ['वि मा', 'विमा'], ['गु णांक', 'गुणांक'], ['अनुक्रमानु पाती', 'अनुक्रमानुपाती'], ['अनु क्र मानुपाती', 'अनुक्रमानुपाती'], ['त्रु टियाँ', 'त्रुटियाँ'], ['त्रु टि', 'त्रुटि'], ['लम्बा ई', 'लम्बाई'], ['त्रि क्या', 'त्रिज्या'], ['सं ख्या ओं', 'संख्याओं'], ['संख्या ओं', 'संख्याओं'], ['प्र क्षे पवक्र', 'प्रक्षेपवक्र'], ['प्रद शि\u0000त', 'प्रदर्शित'], ['प्र योग', 'प्रयोग'], ['प्रे क्षणों', 'प्रेक्षणों'], ['क्षम ता', 'क्षमता'], ['समतु ल्य', 'समतुल्य'], ['अल्पत मांक', 'अल्पतमांक'], ['चु म्ब कीयफ्लक्स', 'चुंबकीय फ्लक्स'], ['चु म्ब कीय', 'चुंबकीय'], ['के \u0000ानता गुणांक', 'के श्यानता गुणांक'], ['किसी व\u0000ु का', 'किसी वस्तु का'], ['गति की अ\u0000वा में', 'गति की अवस्था में'], ['आयताकार \u0000ेट', 'आयताकार प्लेट'], ['वगा\u0000कार \u0000ेट', 'वर्गाकार प्लेट'], ['वगाकार ेट', 'वर्गाकार प्लेट'], ['मीटर \u0000ेल', 'मीटर स्केल'], ['के लिए वि\u0000ापन', 'के लिए विस्थापन']
+  ];
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const apply = list => {
+    const sorted = list.slice().sort((a, b) => b[0].length - a[0].length);
+    for (const pair of sorted) {
+      const key = pair[0], val = pair[1];
+      const n = key.split(NUL).length - 1;
+      const parts = esc(key).split(NUL);
+      let pat = parts[0];
+      for (let i = 1; i < parts.length; i++) {
+        const last = (i === parts.length - 1 && parts[i] === '');
+        pat += '\\s*' + NUL + (last ? '' : '\\s*') + parts[i];
+      }
+      const re = new RegExp('(^|[^\\u0900-\\u097F])' + pat + '(?![\\u0900-\\u097F])', 'g');
+      t = t.replace(re, (m, pre) => { cleanText.repaired += n; return pre + val; });
+    }
+  };
+  apply(REPAIR); apply(REPAIR_WORD); apply(REPAIR_SPLIT);
+  return t.split(NUL).join('').replace(/\s+/g, ' ')
+    .replace(/(^|[\s\(\[\{])\u093F([\u0915-\u0939](?:\u094D[\u0915-\u0939])*)/g, '$1$2\u093F')
+    .trim();
+}
+function extractOptions(qBody) {
+  // Options are the run of markers A, B, C, D in order. Taking the FIRST
+  // "(A)" blindly was wrong: a question stem can contain "(D)" as a variable
+  // (e.g. "distance (D) 1.496 x 10^11 m"), which shifted every option.
+  const runSplit = marks => {
+    let start = -1;
+    for (let i = 0; i + 1 < marks.length; i++) {
+      if (marks[i].letter === 'A' && marks[i + 1].letter === 'B') { start = i; break; }
+    }
+    if (start < 0) return null;
+    const qtext = qBody.slice(0, marks[start].idx).trim();
+    const options = [];
+    for (let i = start; i < marks.length && options.length < 4; i++) {
+      const nextIdx = (i + 1 < marks.length) ? marks[i + 1].idx : qBody.length;
+      const t = qBody.slice(marks[i].end, nextIdx).trim();
+      if (t) options.push(t);
+    }
+    return (options.length >= 2) ? { qtext, options } : null;
+  };
+  let marks = [], m;
+  const re1 = /\(([A-Da-d])\)/g;
+  while ((m = re1.exec(qBody)) !== null) marks.push({ letter: m[1].toUpperCase(), idx: m.index, end: m.index + m[0].length });
+  let r = runSplit(marks);
+  if (r) return r;
+  marks = [];
+  const re2 = /(?:^|[\s\n])([A-Da-d])[\)\.]/g;
+  while ((m = re2.exec(qBody)) !== null) marks.push({ letter: m[1].toUpperCase(), idx: m.index, end: m.index + m[0].length });
+  r = runSplit(marks);
+  if (r) return r;
+  return { qtext: qBody, options: [] };
+}
+function parseAnswerKey(keyText) {
+  const map = {};
+  if (!keyText) return map;
+  const normNum = v => v.replace(/^0+(?=\d)/, '');
+  let re, m;
+  // Table-grid key: a row "1 2 3 4 5 ..." with a row of letters below it.
+  const rows = keyText.split('\n').map(r => r.trim()).filter(Boolean);
+  for (let i = 0; i + 1 < rows.length; i++) {
+    const nums = rows[i].split(/\s+/);
+    const lets = rows[i + 1].split(/\s+/);
+    if (nums.length >= 5 && lets.length >= nums.length - 1 &&
+        nums.every((v, j) => /^\d{1,3}$/.test(v) && parseInt(v) === parseInt(nums[0]) + j) &&
+        lets.slice(0, nums.length).every(v => /^[A-Da-d]$/.test(v))) {
+      nums.forEach((v, j) => { const n = parseInt(v); if (!(n in map) && lets[j]) map[n] = { type: 'option', values: [lets[j].toUpperCase().charCodeAt(0) - 65] }; });
+    }
+  }
+  // Paired "1 D 2 B 3 A ..." (needs at least 3 pairs to count as a key).
+  const pairs = [...keyText.matchAll(/(?:^|\s)(\d{1,3})\s+([A-Da-d])(?=\s|$)/g)];
+  if (pairs.length >= 3) {
+    for (const p of pairs) { const n = parseInt(p[1]); if (!(n in map)) map[n] = { type: 'option', values: [p[2].toUpperCase().charCodeAt(0) - 65] }; }
+  }
+  // Multi-correct first: "Q2 (A, B, C)" -> values [0,1,2]
+  re = /Q\s*(\d{1,3})\s*[\.\)\:\=\-]?\s*\(\s*([A-Da-d](?:\s*,\s*[A-Da-d])*)\s*\)/g;
+  while ((m = re.exec(keyText)) !== null) {
+    const n = parseInt(m[1]);
+    if (!(n in map)) map[n] = { type: 'option', values: m[2].split(',').map(s => s.trim().toUpperCase().charCodeAt(0) - 65) };
+  }
+  // Single option: "Q1 (D)" / "Q1. D" / "Q1: D"
+  re = /Q\s*(\d{1,3})\s*[\.\)\:\=\-]?\s*\(?\s*([A-Da-d])\s*\)?/g;
+  while ((m = re.exec(keyText)) !== null) {
+    const n = parseInt(m[1]);
+    if (!(n in map)) map[n] = { type: 'option', values: [m[2].toUpperCase().charCodeAt(0) - 65] };
+  }
+  // Numeric answer: "Q1 (42)"
+  re = /Q\s*(\d{1,3})\s*[\.\)\:\=\-]?\s*\(?\s*(\d{1,4})\s*\)?/g;
+  while ((m = re.exec(keyText)) !== null) {
+    const n = parseInt(m[1]);
+    if (!(n in map)) map[n] = { type: 'numeric', value: normNum(m[2]) };
+  }
+  // "1. B" style (also "1) B", "1: B", "1-B", "1 = B")
+  re = /(?:^|\s)(\d{1,3})\s*[\.\)\:\-\=]\s*([A-Da-d])\b/g;
+  while ((m = re.exec(keyText)) !== null) {
+    const n = parseInt(m[1]);
+    if (!(n in map)) map[n] = { type: 'option', values: [m[2].toUpperCase().charCodeAt(0) - 65] };
+  }
+  return map;
+}
+function parseDPP(pages, fileName) {
+  cleanText.repaired = 0;
+  // Urdu normalisation (applied to body + key text): "سوال 5" / "سوال نمبر 5"
+  // -> "Q5", Eastern Arabic digits ٠-٩ and ۰-۹ -> 0-9, Urdu option letters
+  // (الف)(ب)(ج)(د) -> (A)(B)(C)(D).
+  const URDU_DIGITS = '٠١٢٣٤٥٦٧٨٩';
+  const URDU_DIGITS_EXT = '۰۱۲۳۴۵۶۷۸۹';
+  const normKey = s => s.replace(/[٠-٩]/g, d => URDU_DIGITS.indexOf(d))
+    .replace(/[۰-۹]/g, d => URDU_DIGITS_EXT.indexOf(d))
+    .replace(/سوال\s*(?:نمبر\s*)?(\d{1,3})/g, 'Q$1')
+    .replace(/\(الف\)/g, '(A)').replace(/\(ب\)/g, '(B)').replace(/\(ج\)/g, '(C)').replace(/\(د\)/g, '(D)');
+  const full = pages.join('\n');
+  // Some PDFs hide letters in their font data (pdf.js reads them as \u0000).
+  const unmapped = (full.match(/[\u0000\ufffd]/g) || []).length;
+  // Paper title: first real line of page 1, else the file name.
+  let title = (fileName || 'Untitled DPP').replace(/\.pdf$/i, '');
+  const JUNK = /^(master ncert.*|jee|dpp:?\s*\d*|physics|chemistry|maths?|mathematics|biology|arjuna.*|इकाई तथा मापन|मापन)$/i;
+  const SUBJLINE = /^(Physics|Chemistry|Maths|Mathematics|Biology)$/i;
+  // Title skip-list: like JUNK, but the "Arjuna ..." header line IS a good
+  // title, so it is not skipped here.
+  const TITLE_SKIP = /^(master ncert.*|jee|dpp:?\s*\d*|physics|chemistry|maths?|mathematics|biology|इकाई तथा मापन|मापन)$/i;
+  const firstLines = (pages[0] || '').split('\n').map(s => s.trim()).filter(Boolean);
+  for (const ln of firstLines) {
+    if (SUBJLINE.test(ln) || TITLE_SKIP.test(ln) || ln.length < 3) continue;
+    title = ln; break;
+  }
+  // Answer key: search pages from the LAST one backwards. A page counts as
+  // the key page if it contains "Answer", or if it parses as a key table
+  // (>=5 entries and no option markers — so a question page is never eaten).
+  let bodyText = full, keyText = '';
+  let keyPageIdx = -1, keyStart = -1;
+  for (let i = pages.length - 1; i >= 0; i--) {
+    const idx = (pages[i] || '').search(/answer|جواب/i);
+    if (idx >= 0) { keyPageIdx = i; keyStart = idx; break; }
+  }
+  // Only treat it as the key page if it actually parses as a key — a
+  // question page can contain the word "Answer"/"جواب" too.
+  if (keyPageIdx >= 0 && !Object.keys(parseAnswerKey(normKey(pages[keyPageIdx].slice(keyStart)))).length) keyPageIdx = -1;
+  if (keyPageIdx >= 0) {
+    keyText = pages[keyPageIdx].slice(keyStart);
+    bodyText = pages.map((p, i) => i === keyPageIdx ? p.slice(0, keyStart) : p).join('\n');
+  } else {
+    for (let i = pages.length - 1; i >= 0; i--) {
+      const p = pages[i] || '';
+      const m = parseAnswerKey(normKey(p));
+      const markers = (p.match(/\([A-Da-d]\)/g) || []).length;
+      if (Object.keys(m).length >= 3 && markers < 2) {
+        keyText = p;
+        bodyText = pages.filter((_, j) => j !== i).join('\n');
+        break;
+      }
+    }
+  }
+  // Urdu: "سوال 5" -> "Q5", Eastern Arabic digits -> Latin, Urdu option
+  // letters (الف)(ب)(ج)(د) -> (A)(B)(C)(D). Applied to the body and the
+  // key text alike so both sides parse with the same markers.
+  bodyText = normKey(bodyText);
+  keyText = normKey(keyText);
+  // Normalise question-number styles before splitting: "Q.1" -> "Q1",
+  // "Question 1" / "Ques 1" -> "Q1".
+  bodyText = bodyText.replace(/\bQ\s*\.\s*(\d{1,3})\b/g, 'Q$1')
+    .replace(/\b(?:Question|Ques\.?|Que\.?)\s*(\d{1,3})\b/gi, 'Q$1');
+  // Subject detection: a standalone "Physics"/"Chemistry"/"Maths"/"Biology"
+  // line assigns every following question to that subject until the next one.
+  const subjOf = {};
+  let curSubj = 'General';
+  for (const ln of bodyText.split('\n')) {
+    const t = ln.trim();
+    const sm = t.match(SUBJLINE);
+    if (sm) { curSubj = normSubj(sm[1]); continue; }
+    const qm = t.match(/^Q\s?(\d{1,3})\b/);
+    if (qm) subjOf[parseInt(qm[1])] = curSubj;
+  }
+  // Strip headers, footers and watermarks so they never land inside a question
+  // (e.g. "Master NCERT with PW Books APP" was glued into option C/D text).
+  bodyText = bodyText.replace(/master ncert with pw books app/gi, '');
+  bodyText = bodyText.split('\n').filter(ln => !JUNK.test(ln.trim())).join('\n');
+  const answerMap = parseAnswerKey(keyText);
+  const hasKey = Object.keys(answerMap).length > 0;
+  const dropped = [], qs = [];
+  const pushQ = (num, qBody) => {
+    qBody = (qBody || '').trim().replace(/^[\.\)\:\-–—]+/, '').trim();
+    if (!qBody || qBody.length < 10) return;
+    const key = answerMap[num];
+    const subject = subjOf[num] || 'General';
+    const opts = extractOptions(qBody);
+    // Image/graph options: the (A)(B)(C)(D) markers are there but fewer
+    // than 2 of them have any text (the options are pictures). This catches
+    // Q11 even though its "ग्राफ" word lost letters to the font issue.
+    const markerCount = (qBody.match(/\([A-Da-d]\)/g) || []).length;
+    if (opts.options.length >= 2) {
+      qs.push({ n: num, kind: 'mcq', q: cleanText(opts.qtext), o: opts.options.map(cleanText),
+        a: (key && key.type === 'option') ? key.values : [],
+        multi: !!(key && key.type === 'option' && key.values.length > 1),
+        hasKey: !!(key && key.type === 'option'), numAns: null, subject });
+    } else if (key && key.type === 'numeric') {
+      qs.push({ n: num, kind: 'numeric', q: cleanText(qBody), o: [], a: [], multi: false,
+        hasKey: true, numAns: key.value, subject });
+    } else if (markerCount >= 2 || /graph|figure|diagram|चित्र|ग्राफ|आकृति/i.test(qBody)) {
+      // Options are an image/graph — text parsing cannot read them.
+      dropped.push({ n: num, reason: 'options are an image / graph' });
+    } else {
+      // Text-only question, no options, no numeric key: keep it as a
+      // type-in (numeric) question without a key — the user can add the
+      // key by hand in the preview.
+      qs.push({ n: num, kind: 'numeric', q: cleanText(qBody), o: [], a: [], multi: false,
+        hasKey: false, numAns: null, subject });
+    }
+  };
+  const parts = bodyText.split(/(?:^|\n)\s*Q\s?(\d{1,3})\b/);
+  if (parts.length > 3) {
+    for (let i = 1; i < parts.length; i += 2) pushQ(parseInt(parts[i]), parts[i + 1]);
+  }
+  if (!qs.length) {
+    const qRegex = /(?:^|\n)\s*(\d{1,3})[\.\)]\s*([\s\S]*?)(?=(?:^|\n)\s*\d{1,3}[\.\)]\s*|\s*$)/g;
+    let m;
+    while ((m = qRegex.exec(bodyText)) !== null) pushQ(parseInt(m[1]), m[2]);
+  }
+  qs.sort((a, b) => a.n - b.n);
+  return { title, questions: qs, dropped, unmapped, repaired: cleanText.repaired, unmappedResidual: Math.max(0, unmapped - cleanText.repaired), hasKey };
+}
+
+/* ══════════ STATE ══════════ */
+let PV = null;      // parsed paper under preview {fileName, title, questions, dropped, unmapped, hasKey}
+let TEST = null;    // active test runtime
+let RESULT = null;  // last result object
+let HIST = [];      // history entries (RESULT objects)
+
+/* ══════════ UPLOAD ══════════ */
+const dz = $('dz'), fi = $('fi');
+const msg = (t, c) => { const e = $('upMsg'); e.textContent = t; e.className = c || ''; };
+['dragover','dragenter'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add('drag'); }));
+['dragleave','drop'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', ev => { const f = ev.dataTransfer.files[0]; if (f) load(f); });
+dz.addEventListener('click', ev => { if (ev.target !== fi) fi.click(); });
+fi.addEventListener('change', () => { if (fi.files[0]) load(fi.files[0]); });
+
+async function load(f) {
+  if (inProgress()) {
+    if (!confirm('A test is in progress. Starting a new paper will discard it. Continue?')) { fi.value = ''; return; }
+    clearProgress();
+  }
+  const fiEl = $('fileInfo'); if (fiEl) fiEl.textContent = `📄 ${f.name} · ${(f.size / 1024).toFixed(0)} KB`;
+  msg('⏳ Reading PDF…', 'load');
+  try {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF engine not loaded — check internet.');
+    if (!/\.pdf$/i.test(f.name)) throw new Error('Please choose a PDF file.');
+    if (f.size > 20 * 1024 * 1024) throw new Error('File is too large (max 20 MB).');
+    const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+    const pg = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      msg(`⏳ Page ${i} of ${pdf.numPages}…`, 'load');
+      const p = await pdf.getPage(i);
+      pg.push(pageToText(await p.getTextContent(), p));
+    }
+    let res = parseDPP(pg, f.name);
+    if (!res.questions.length) {
+      const totalText = pg.join('').replace(/\s/g, '').length;
+      if (totalText < 50) {
+        msg('❌ This PDF has no readable text — it looks like a scanned / photo PDF. Tap below to read it with OCR (Hindi · English · اردو). OCR can misread letters, so check every question in the preview.', 'err');
+        const ob = $('ocrBtn');
+        ob.style.display = '';
+        ob.onclick = () => runOCR(pdf, f);
+        return;
+      }
+      msg('❌ No questions found in a format I can read (Q1…QN or 1. 2. 3. numbering, with (A)(B)(C)(D) options). Send this PDF to Zara — I\'ll check its format.', 'err');
+      return;
+    }
+    PV = { fileName: f.name, title: res.title, questions: res.questions, dropped: res.dropped, unmapped: res.unmapped, unmappedResidual: res.unmappedResidual, repaired: res.repaired, hasKey: res.hasKey };
+    msg(`✅ ${res.questions.length} questions read!` + (res.hasKey ? '' : ' — no answer key found in this PDF; add keys by hand in the preview.'), 'ok');
+    renderPreview();
+    go('sc-preview');
+  } catch (e) { console.error(e); msg('❌ ' + e.message, 'err'); }
+}
+
+/* ══════════ OCR (scanned / photo PDFs) ══════════ */
+// Tesseract.js (v5) with Hindi + English + Urdu, all files bundled locally
+// (tesseract/) so OCR works fully offline. OCR is a best-effort read: the
+// preview/edit screen stays the safety net, and a file with no questions
+// after OCR is reported as notes — never turned into invented questions.
+// Two passes: Hindi+English first (the Urdu model adds Arabic-script noise
+// to Hindi pages), then Hindi+English+Urdu if the first pass found nothing.
+const OCR_WORKERS = {};
+async function ocrWorker(langs) {
+  if (OCR_WORKERS[langs]) return OCR_WORKERS[langs];
+  if (typeof Tesseract === 'undefined') throw new Error('OCR files did not load — reload the page and try again.');
+  const w = await Tesseract.createWorker(langs, 1, {
+    workerPath: 'tesseract/worker.min.js',
+    corePath: 'tesseract/tesseract-core-lstm.wasm.js',
+    langPath: 'tesseract',
+    cacheMethod: 'none',
+    gzip: false,
+    logger: m => { if (m.status === 'recognizing text' && m.progress != null) { const p = $('ocrProg'); if (p) p.textContent = '🔍 Reading page… ' + Math.round(m.progress * 100) + '%'; } }
+  });
+  OCR_WORKERS[langs] = w;
+  return w;
+}
+async function ocrPages(pdf, langs) {
+  const worker = await ocrWorker(langs);
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const prog = $('ocrProg'); if (prog) prog.textContent = `🔍 OCR — page ${i} of ${pdf.numPages}…`;
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({ scale: 2 });
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width; canvas.height = vp.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    const { data: { text } } = await worker.recognize(canvas);
+    pages.push(text);
+  }
+  return pages;
+}
+// OCR misreads question markers on this font: "Q" comes out as "७"
+// (Devanagari 7) and Devanagari digits appear mid-text, and "Q1" sometimes
+// as "Qt". Normalise before parsing: Devanagari / Eastern Arabic digits ->
+// Latin, "Qt" -> "Q1", and a bare "7N" token -> "QN" (a standalone number
+// starting with 7 in a question paper is almost always a misread "Q").
+// This is best-effort: OCR text stays noisy, so some questions still need
+// hand-fixing in the preview screen.
+const OCR_DIGITS = '०१२३४५६७८९';
+const OCR_DIGITS_AR = '٠١٢٣٤٥٦٧٨٩';
+const OCR_DIGITS_EXT = '۰۱۲۳۴۵۶۷۸۹';
+function ocrNorm(text) {
+  return text.replace(/[०-९]/g, d => OCR_DIGITS.indexOf(d))
+    .replace(/[٠-٩]/g, d => OCR_DIGITS_AR.indexOf(d))
+    .replace(/[۰-۹]/g, d => OCR_DIGITS_EXT.indexOf(d))
+    .replace(/\bQt\b/g, 'Q1')
+    .replace(/\b7(\d{1,2})\b/g, 'Q$1')
+    // Option markers: "(B)" comes out as "(8)", "(C)" as "(©)" or "©)",
+    // "(D)" as "(0)". These shapes never occur as genuine markers.
+    .replace(/\(8\)/g, '(B)')
+    .replace(/\(©\)/g, '(C)').replace(/©\)/g, '(C)')
+    .replace(/\(0\)/g, '(D)');
+}
+async function runOCR(pdf, f) {
+  const ob = $('ocrBtn'); ob.style.display = 'none';
+  const prog = $('ocrProg'); prog.style.display = ''; prog.textContent = '🔍 Starting OCR…';
+  msg('⏳ Reading the scanned pages with OCR — this takes a while (about 5–15 seconds a page).', 'load');
+  try {
+    let res = parseDPP((await ocrPages(pdf, 'hin+eng')).map(ocrNorm), f.name);
+    if (!res.questions.length) {
+      prog.textContent = '🔍 No questions in Hindi/English — trying Urdu…';
+      res = parseDPP((await ocrPages(pdf, 'hin+eng+urd')).map(ocrNorm), f.name);
+    }
+    prog.style.display = 'none';
+    if (!res.questions.length) {
+      msg('❌ OCR read the pages, but found no questions — this looks like notes or a solution sheet, not a question paper. The app only makes tests from question papers; it does not invent questions from notes.', 'err');
+      ob.style.display = '';
+      ob.onclick = () => runOCR(pdf, f);
+      return;
+    }
+    PV = { fileName: f.name, title: res.title, questions: res.questions, dropped: res.dropped, unmapped: res.unmapped, unmappedResidual: res.unmappedResidual, repaired: res.repaired, hasKey: res.hasKey, ocr: true };
+    msg(`✅ OCR read ${res.questions.length} questions!` + (res.hasKey ? '' : ' — no answer key found; add keys by hand in the preview.'), 'ok');
+    renderPreview();
+    go('sc-preview');
+  } catch (e) { console.error(e); prog.style.display = 'none'; msg('❌ OCR failed: ' + e.message, 'err'); }
+}
+
+/* ══════════ SEPARATE QUESTIONS + ANSWER KEY ══════════ */
+// Questions ek PDF se, answer key alag se — key ya to dusri PDF se, ya
+// type/paste karke. Dono ka result parseAnswerKey() ka map hai
+// ({qNumber: {type:'option', values:[...]} | {type:'numeric', value}}),
+// jo question number se match karke lagaya jata hai. Jo source sabse
+// akhir me use hua, wahi key lagti hai (PDF ya type — dono chalega).
+let SEP = null; // {fileName, title, questions, dropped, unmapped, unmappedResidual, repaired, keyMap, keySrc}
+function sepSetStatus(id, t, c) { const e = $(id); if (e) { e.textContent = t; e.className = 'sep-status' + (c ? ' ' + c : ''); } }
+async function sepReadPages(f, statusId) {
+  if (typeof pdfjsLib === 'undefined') throw new Error('PDF engine not loaded — check internet.');
+  if (!/\.pdf$/i.test(f.name)) throw new Error('Please choose a PDF file.');
+  if (f.size > 20 * 1024 * 1024) throw new Error('File is too large (max 20 MB).');
+  const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+  const pg = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    sepSetStatus(statusId, `⏳ Page ${i} of ${pdf.numPages} padh raha hai…`);
+    const p = await pdf.getPage(i);
+    pg.push(pageToText(await p.getTextContent(), p));
+  }
+  return pg;
+}
+function sepRefresh() {
+  const goBtn = $('sepGo');
+  const qOk = !!(SEP && SEP.questions && SEP.questions.length);
+  const kCount = SEP && SEP.keyMap ? Object.keys(SEP.keyMap).length : 0;
+  if (qOk && kCount) {
+    sepSetStatus('sepStatus', `✅ Taiyaar: ${SEP.questions.length} questions + ${kCount} answers (${SEP.keySrc}). Ab key lagao.`, 'ok');
+    goBtn.disabled = false;
+  } else if (qOk) {
+    sepSetStatus('sepStatus', `${SEP.questions.length} questions ready hain — ab Step 2 me answer key do (PDF ya type karke).`);
+    goBtn.disabled = true;
+  } else {
+    sepSetStatus('sepStatus', kCount ? `${kCount} answers ready hain — ab Step 1 me questions PDF do.` : '');
+    goBtn.disabled = true;
+  }
+}
+$('sepQFile').addEventListener('change', async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  if (inProgress()) {
+    if (!confirm('A test is in progress. Starting a new paper will discard it. Continue?')) { ev.target.value = ''; return; }
+    clearProgress();
+  }
+  sepSetStatus('sepQStatus', '⏳ Questions PDF padh raha hai…');
+  try {
+    const pg = await sepReadPages(f, 'sepQStatus');
+    const res = parseDPP(pg, f.name);
+    if (!res.questions.length) {
+      SEP = null;
+      sepSetStatus('sepQStatus', '❌ Is PDF me questions nahi mile (Q1…QN ya 1. 2. 3. numbering + (A)(B)(C)(D) options chahiye).', 'err');
+      sepRefresh(); return;
+    }
+    if (!SEP) SEP = { keyMap: null, keySrc: '' };
+    SEP.fileName = f.name; SEP.title = res.title; SEP.questions = res.questions;
+    SEP.dropped = res.dropped; SEP.unmapped = res.unmapped; SEP.unmappedResidual = res.unmappedResidual; SEP.repaired = res.repaired;
+    sepSetStatus('sepQStatus', `✅ ${res.questions.length} questions mil gaye.` + (res.hasKey ? ' (Is PDF me apni key bhi hai — alag key doge to wahi lagegi.)' : ''), 'ok');
+  } catch (e) { console.error(e); sepSetStatus('sepQStatus', '❌ ' + e.message, 'err'); }
+  sepRefresh();
+});
+$('sepKFile').addEventListener('change', async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  sepSetStatus('sepKStatus', '⏳ Key PDF padh raha hai…');
+  try {
+    const pg = await sepReadPages(f, 'sepKStatus');
+    const map = parseAnswerKey(pg.join('\n'));
+    const count = Object.keys(map).length;
+    if (!count) { sepSetStatus('sepKStatus', '❌ Is PDF me answer key nahi mili. Key is format me honi chahiye: 1-B, 2-A… ya Q1 (B)… — ya neeche "Type karo" se de do.', 'err'); return; }
+    if (!SEP) SEP = { questions: null, keyMap: null, keySrc: '' };
+    SEP.keyMap = map; SEP.keySrc = 'key PDF';
+    sepSetStatus('sepKStatus', `✅ ${count} answers mil gaye is PDF se.`, 'ok');
+  } catch (e) { console.error(e); sepSetStatus('sepKStatus', '❌ ' + e.message, 'err'); }
+  sepRefresh();
+});
+$('sepKText').addEventListener('input', ev => {
+  const map = parseAnswerKey(ev.target.value);
+  const count = Object.keys(map).length;
+  sepSetStatus('sepTStatus', count ? `✅ ${count} answers mile.` : '0 answers mile — format: 1-B 2-A 3-D…', count ? 'ok' : '');
+  if (count) {
+    if (!SEP) SEP = { questions: null, keyMap: null, keySrc: '' };
+    SEP.keyMap = map; SEP.keySrc = 'typed key';
+  } else if (SEP && SEP.keySrc === 'typed key') { SEP.keyMap = null; SEP.keySrc = ''; }
+  sepRefresh();
+});
+function sepShowTab(which) {
+  for (const w of ['Pdf', 'Type']) {
+    $('sepTab' + w).classList.toggle('on', w === which);
+    $('sepPane' + w).classList.toggle('on', w === which);
+  }
+}
+$('sepTabPdf').addEventListener('click', () => sepShowTab('Pdf'));
+$('sepTabType').addEventListener('click', () => sepShowTab('Type'));
+$('sepGo').addEventListener('click', () => {
+  if (!SEP || !SEP.questions || !SEP.questions.length || !SEP.keyMap) return;
+  let applied = 0, skipped = 0;
+  const questions = SEP.questions.map(q => {
+    const k = SEP.keyMap[q.n];
+    if (!k) return q;
+    if (k.type === 'option' && q.kind === 'mcq') {
+      applied++;
+      return { ...q, a: [...k.values], multi: k.values.length > 1, hasKey: true };
+    }
+    if (k.type === 'numeric' && q.kind === 'numeric') {
+      applied++;
+      return { ...q, numAns: k.value, hasKey: true };
+    }
+    skipped++;
+    return q;
+  });
+  PV = { fileName: SEP.fileName, title: SEP.title, questions, dropped: SEP.dropped || [], unmapped: SEP.unmapped || 0, unmappedResidual: SEP.unmappedResidual, repaired: SEP.repaired, hasKey: applied > 0, separateKey: true };
+  msg(`✅ ${questions.length} questions + alag se di gayi key (${SEP.keySrc}) — ${applied} answers lag gaye` + (skipped ? `, ${skipped} match nahi hue` : '') + '.', 'ok');
+  renderPreview();
+  go('sc-preview');
+});
+
+/* ══════════ PREVIEW (check & fix) ══════════ */
+// Compact counts for the sticky bar: the full summary is too long for a
+// narrow phone row next to the button, so "· 0 without key" is dropped
+// when there are none (the card below still shows the full counts).
+function stickySummary(pv) {
+  const withKey = pv.questions.filter(q => q.hasKey).length;
+  const noKey = pv.questions.length - withKey;
+  return `<b>${pv.questions.length}</b> questions · <b>${withKey}</b> with key` + (noKey ? ` · <b>${noKey}</b> without key` : '');
+}
+function renderPreview() {
+  const pv = PV;
+  const withKey = pv.questions.filter(q => q.hasKey).length;
+  $('pvTitle').textContent = pv.title || pv.fileName || '';
+  $('pvSummary').innerHTML = `<b>${pv.questions.length}</b> questions · <b>${withKey}</b> with key · <b>${pv.questions.length - withKey}</b> without key` + (pv.dropped.length ? ` · <b>${pv.dropped.length}</b> skipped` : '');
+  $('pvStickyInfo').innerHTML = stickySummary(pv);
+  const warns = [];
+  const unmappedShow = (pv.unmappedResidual != null ? pv.unmappedResidual : pv.unmapped) || 0;
+  if (pv.ocr) warns.push('🔍 This paper was read with OCR from a scanned PDF — letters and numbers can be misread (especially Hindi/Urdu). Check every question below and fix by hand before starting.');
+  if (unmappedShow) warns.push(`⚠️ ${unmappedShow} letters in this PDF could not be read (font issue) — a few words may show missing letters. Check the questions below and fix them by hand.`);
+  if (!pv.hasKey) warns.push('⚠️ No answer key found in this PDF — tap a question to add its key by hand, or the test will run without scoring.');
+  $('pvWarn').textContent = warns.join(' ');
+  $('pvDropped').innerHTML = pv.dropped.length
+    ? pv.dropped.map(d => `Q${d.n} skipped — ${d.reason}.`).join('<br>') + '<br><span style="color:var(--ink2)">Image questions will be supported in Phase 2.</span>'
+    : '';
+  const list = $('pvList'); list.innerHTML = '';
+  pv.questions.forEach((q, idx) => list.appendChild(previewCard(q, idx)));
+  $('btnToSetup').disabled = pv.questions.length === 0;
+  $('btnToSetupTop').disabled = pv.questions.length === 0;
+  $('pvErr').textContent = '';
+  $('pvStickyErr').textContent = '';
+}
+function subjSelect(cur, onchg) {
+  const s = document.createElement('select');
+  ['General', ...SUBJECTS].forEach(sub => {
+    const o = document.createElement('option'); o.value = sub; o.textContent = sub; if (sub === cur) o.selected = true; s.appendChild(o);
+  });
+  s.onchange = () => onchg(s.value);
+  return s;
+}
+function previewCard(q, idx) {
+  const card = document.createElement('div'); card.className = 'qedit'; card.id = 'pv-' + idx;
+  const head = document.createElement('div'); head.className = 'qedit-head';
+  const title = document.createElement('span'); title.className = 'qedit-title'; title.textContent = 'Q' + q.n + ' · ' + (q.kind === 'numeric' ? 'Numeric (type-in)' : (q.multi ? 'MCQ · multiple correct' : 'MCQ'));
+  const del = document.createElement('button'); del.className = 'qedit-del'; del.textContent = '✕ Delete';
+  del.onclick = () => { PV.questions.splice(idx, 1); renderPreview(); };
+  head.append(title, del); card.appendChild(head);
+
+  // kind + subject row
+  const kr = document.createElement('div'); kr.className = 'kind-row';
+  const kindSel = document.createElement('select');
+  [['mcq', 'MCQ (options)'], ['numeric', 'Numeric (type-in answer)']].forEach(([v, t]) => {
+    const o = document.createElement('option'); o.value = v; o.textContent = t; if (v === q.kind) o.selected = true; kindSel.appendChild(o);
+  });
+  kindSel.onchange = () => {
+    q.kind = kindSel.value;
+    if (q.kind === 'numeric') { q.o = []; q.a = []; q.multi = false; }
+    else { if (!q.o.length) q.o = ['', '', '', '']; q.numAns = null; }
+    renderPreview();
+  };
+  kr.append(kindSel, subjSelect(q.subject, v => { q.subject = v; }));
+  card.appendChild(kr);
+
+  // question text
+  const lq = document.createElement('label'); lq.textContent = 'Question'; card.appendChild(lq);
+  const ta = document.createElement('textarea'); ta.value = q.q; ta.rows = 3; ta.dir = 'auto';
+  ta.oninput = () => { q.q = ta.value; };
+  card.appendChild(ta);
+
+  if (q.kind === 'mcq') {
+    const lo = document.createElement('label'); lo.textContent = 'Options'; card.appendChild(lo);
+    q.o.forEach((opt, j) => {
+      const row = document.createElement('div'); row.className = 'opt-edit';
+      const badge = document.createElement('span'); badge.className = 'ol'; badge.textContent = 'ABCD'[j] || (j + 1);
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = opt; inp.dir = 'auto';
+      inp.oninput = () => { q.o[j] = inp.value; };
+      row.append(badge, inp); card.appendChild(row);
+    });
+    // key editor
+    const lk = document.createElement('label'); lk.textContent = 'Correct answer'; card.appendChild(lk);
+    const keyRow = document.createElement('div'); keyRow.className = 'key-row';
+    const setKey = () => {
+      const picked = [...keyRow.querySelectorAll('input:checked')].map(i => parseInt(i.value));
+      q.a = picked; q.hasKey = picked.length > 0;
+      [...keyRow.querySelectorAll('.key-chip')].forEach(c => c.classList.toggle('on', c.querySelector('input').checked));
+      renderPreviewSummary();
+    };
+    const mkChip = (val, label) => {
+      const chip = document.createElement('label'); chip.className = 'key-chip' + ((q.multi ? q.a.includes(val) : q.a[0] === val) ? ' on' : '');
+      const inp = document.createElement('input'); inp.type = q.multi ? 'checkbox' : 'radio'; inp.name = 'key-' + idx; inp.value = val;
+      inp.checked = q.multi ? q.a.includes(val) : q.a[0] === val;
+      inp.onchange = setKey;
+      chip.append(inp, document.createTextNode(label)); return chip;
+    };
+    q.o.forEach((_, j) => keyRow.appendChild(mkChip(j, 'ABCD'[j] || (j + 1))));
+    const noKey = document.createElement('label'); noKey.className = 'key-chip' + (!q.hasKey ? ' on' : '');
+    const nk = document.createElement('input'); nk.type = 'radio'; nk.name = 'key-' + idx; nk.value = -1; nk.checked = !q.hasKey;
+    nk.onchange = () => { q.a = []; q.hasKey = false; renderPreview(); };
+    noKey.append(nk, document.createTextNode('No key')); keyRow.appendChild(noKey);
+    card.appendChild(keyRow);
+    // multi toggle
+    const mrow = document.createElement('label'); mrow.className = 'chk-row';
+    const mcb = document.createElement('input'); mcb.type = 'checkbox'; mcb.checked = q.multi;
+    mcb.onchange = () => { q.multi = mcb.checked; if (!q.multi && q.a.length > 1) q.a = q.a.slice(0, 1); renderPreview(); };
+    mrow.append(mcb, document.createTextNode('Multiple correct answers')); card.appendChild(mrow);
+  } else {
+    const lk = document.createElement('label'); lk.textContent = 'Correct answer (number)'; card.appendChild(lk);
+    const row = document.createElement('div'); row.className = 'opt-edit';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.inputMode = 'numeric'; inp.placeholder = 'e.g. 42';
+    inp.value = q.numAns == null ? '' : q.numAns;
+    inp.oninput = () => { const v = inp.value.trim(); q.numAns = v === '' ? null : v; q.hasKey = v !== ''; renderPreviewSummary(); };
+    row.appendChild(inp); card.appendChild(row);
+    const nk = document.createElement('label'); nk.className = 'chk-row';
+    const ncb = document.createElement('input'); ncb.type = 'checkbox'; ncb.checked = !q.hasKey;
+    ncb.onchange = () => { q.hasKey = !ncb.checked; if (!q.hasKey) q.numAns = null; renderPreviewSummary(); };
+    nk.append(ncb, document.createTextNode('No key for this question')); card.appendChild(nk);
+  }
+  return card;
+}
+function renderPreviewSummary() {
+  const pv = PV; if (!pv) return;
+  const withKey = pv.questions.filter(q => q.hasKey).length;
+  $('pvTitle').textContent = pv.title || pv.fileName || '';
+  $('pvSummary').innerHTML = `<b>${pv.questions.length}</b> questions · <b>${withKey}</b> with key · <b>${pv.questions.length - withKey}</b> without key` + (pv.dropped.length ? ` · <b>${pv.dropped.length}</b> skipped` : '');
+  $('pvStickyInfo').innerHTML = stickySummary(pv);
+}
+$('btnAddQ').onclick = () => {
+  const maxN = PV.questions.reduce((m, q) => Math.max(m, q.n), 0);
+  PV.questions.push({ n: maxN + 1, kind: 'mcq', q: '', o: ['', '', '', ''], a: [], multi: false, hasKey: false, numAns: null, subject: 'General' });
+  renderPreview();
+  const el = $('pv-' + (PV.questions.length - 1)); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+function goToSetup() {
+  const bad = [];
+  PV.questions.forEach((q, i) => {
+    const card = $('pv-' + i); if (card) card.classList.remove('bad');
+    if (!q.q.trim()) bad.push(i);
+    else if (q.kind === 'mcq' && q.o.filter(o => o.trim()).length < 2) bad.push(i);
+  });
+  if (bad.length) {
+    bad.forEach(i => { const c = $('pv-' + i); if (c) c.classList.add('bad'); });
+    $('pvErr').textContent = `Fix ${bad.length} question(s) first — empty question or fewer than 2 options (or delete them).`;
+    $('pvStickyErr').textContent = $('pvErr').textContent;
+    const c = $('pv-' + bad[0]); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  buildSetup();
+  go('sc-setup');
+}
+$('btnToSetup').onclick = goToSetup;
+$('btnToSetupTop').onclick = goToSetup;
+$('btnBackHome').onclick = () => { PV = null; fi.value = ''; msg('', ''); go('sc-home'); };
+
+/* ══════════ SETUP ══════════ */
+let MARK = { correct: 4, wrong: 1 };
+function buildSetup() {
+  const n = PV.questions.length;
+  const withKey = PV.questions.filter(q => q.hasKey).length;
+  const noKey = n - withKey;
+  $('suName').value = PV.title || PV.fileName.replace(/\.pdf$/i, '');
+  $('suTime').value = n; // 1 minute per question by default
+  document.querySelectorAll('#suChips .chip').forEach(c => c.classList.toggle('sel', +c.dataset.m === n));
+  const lines = [`${n} questions · ${withKey} with key · ${noKey} without key`];
+  if (noKey) lines.push('Questions without a key don\'t count in the score.');
+  if (PV.dropped.length) lines.push(`${PV.dropped.length} skipped in the PDF — ${PV.dropped.map(d => 'Q' + d.n).join(', ')}.`);
+  $('suSummary').innerHTML = lines.join('<br>');
+  $('suStickyInfo').innerHTML = stickySummary(PV);
+}
+document.querySelectorAll('#suChips .chip').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#suChips .chip').forEach(x => x.classList.remove('sel'));
+  c.classList.add('sel'); $('suTime').value = +c.dataset.m;
+});
+$('suTime').addEventListener('input', () => document.querySelectorAll('#suChips .chip').forEach(x => x.classList.remove('sel')));
+document.querySelectorAll('#suMarks .mark-opt').forEach(o => o.onclick = () => {
+  document.querySelectorAll('#suMarks .mark-opt').forEach(x => x.classList.remove('sel'));
+  o.classList.add('sel');
+  $('suCustom').classList.toggle('show', o.dataset.c === 'x');
+  if (o.dataset.c !== 'x') MARK = { correct: +o.dataset.c, wrong: +o.dataset.w };
+});
+function startTestFromSetup() {
+  const name = $('suName').value.trim() || PV.title || 'Untitled test';
+  let mins = Math.min(600, Math.max(1, parseInt($('suTime').value) || PV.questions.length));
+  if (document.querySelector('#suMarks .mark-opt.sel').dataset.c === 'x') {
+    MARK = { correct: Math.max(0, parseFloat($('suCorrect').value) || 0), wrong: Math.max(0, parseFloat($('suWrong').value) || 0) };
+  }
+  const questions = PV.questions.map(q => ({ ...q, o: [...q.o], a: [...q.a] }));
+  startTest(name, questions, { ...MARK }, mins * 60, $('suShufQ').checked, $('suShufO').checked, PV.fileName);
+}
+$('btnStartTest').onclick = startTestFromSetup;
+$('btnStartTestTop').onclick = startTestFromSetup;
+$('btnBackPreview').onclick = () => { renderPreview(); go('sc-preview'); };
+
+/* ══════════ HISTORY ══════════ */
+const LS_HIST = 'dppmt-history', LS_PROG = 'dppmt-inprogress';
+function loadHist() { try { HIST = JSON.parse(localStorage.getItem(LS_HIST) || '[]'); } catch (e) { HIST = []; } }
+function saveHist() { try { localStorage.setItem(LS_HIST, JSON.stringify(HIST.slice(0, 50))); } catch (e) { /* storage full — history is best-effort */ } }
+function histRow(h, onOpen) {
+  const d = document.createElement('div'); d.className = 'hist-item';
+  const main = document.createElement('div'); main.className = 'hi-main';
+  const nm = document.createElement('div'); nm.className = 'hi-name'; nm.textContent = h.name;
+  const mt = document.createElement('div'); mt.className = 'hi-meta';
+  mt.textContent = new Date(h.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ' · ' + h.questions.length + ' Q · ' + h.stats.acc + '% accuracy';
+  main.append(nm, mt);
+  const sc = document.createElement('div'); sc.className = 'hi-score';
+  sc.innerHTML = esc(String(h.stats.score)) + ' <small>/ ' + esc(String(h.stats.max)) + '</small>';
+  d.append(main, sc);
+  d.onclick = onOpen;
+  return d;
+}
+function renderHomeHist() {
+  const list = $('histList'); list.innerHTML = '';
+  if (!HIST.length) { list.innerHTML = '<div class="empty">No tests yet — upload your first DPP above.</div>'; return; }
+  HIST.slice(0, 5).forEach(h => list.appendChild(histRow(h, () => viewResult(h, true))));
+}
+function renderFullHist() {
+  const list = $('histFull'); list.innerHTML = '';
+  if (!HIST.length) { list.innerHTML = '<div class="empty">No tests yet.</div>'; return; }
+  HIST.forEach(h => list.appendChild(histRow(h, () => viewResult(h, true))));
+}
+$('btnViewAll').onclick = () => { renderFullHist(); go('sc-history'); };
+$('btnBackHome2').onclick = () => { renderHomeHist(); go('sc-home'); };
+$('btnClearHist').onclick = () => {
+  if (!confirm('Clear all saved test history?')) return;
+  HIST = []; saveHist(); renderFullHist(); renderHomeHist();
+};
+$('btnHome2').onclick = () => { renderHomeHist(); checkResume(); go('sc-home'); };
+
+/* ══════════ SCORING (pure — same rules as the fixed app) ══════════
+   Multi-correct is all-or-nothing. Unkeyed questions are "unverified":
+   never counted as correct and excluded from the max score. */
+function scoreTest(questions, answers, marking) {
+  let ok = 0, no = 0, sk = 0, un = 0, score = 0, max = 0, lost = 0;
+  const norm = v => String(v).trim().replace(/^0+(?=\d)/, '');
+  const rows = questions.map((q, i) => {
+    const u = answers[i];
+    const keyStr = q.kind === 'numeric' ? (q.hasKey ? String(q.numAns) : null)
+      : (q.a && q.a.length ? q.a.map(x => 'ABCD'[x]).join(', ') : null);
+    const ansStr = q.kind === 'numeric' ? String(u)
+      : (Array.isArray(u) ? u.map(x => 'ABCD'[x]).join(', ') : (u == null ? null : 'ABCD'[u]));
+    const empty = u === null || u === undefined || (Array.isArray(u) && !u.length) || (typeof u === 'string' && u.trim() === '');
+    let status, note;
+    if (empty) {
+      sk++; status = 'skipped';
+      // A skipped question with a key still counts toward the max marks —
+      // otherwise skipping questions would inflate the percentage.
+      if (keyStr !== null) max += marking.correct;
+      note = keyStr !== null ? 'Skipped — answer: ' + keyStr : 'Skipped';
+    } else if (keyStr === null) {
+      un++; status = 'unverified';
+      note = 'Your answer: ' + ansStr + ' · no key to verify';
+    } else if (q.kind === 'numeric') {
+      if (norm(u) === norm(q.numAns)) { ok++; score += marking.correct; max += marking.correct; status = 'correct'; note = '✓ Correct — ' + q.numAns; }
+      else { no++; score -= marking.wrong; max += marking.correct; lost += marking.wrong; status = 'wrong'; note = '✗ You wrote ' + u + ' → correct: ' + q.numAns; }
+    } else if (q.multi) {
+      const sel = (Array.isArray(u) ? u.slice() : [u]).sort().join(',');
+      const key = q.a.slice().sort().join(',');
+      if (sel === key) { ok++; score += marking.correct; max += marking.correct; status = 'correct'; note = '✓ Correct — ' + keyStr; }
+      else { no++; score -= marking.wrong; max += marking.correct; lost += marking.wrong; status = 'wrong'; note = '✗ You chose ' + ansStr + ' → correct: ' + keyStr; }
+    } else if (u === q.a[0]) {
+      ok++; score += marking.correct; max += marking.correct; status = 'correct'; note = '✓ Correct — ' + keyStr;
+    } else {
+      no++; score -= marking.wrong; max += marking.correct; lost += marking.wrong; status = 'wrong'; note = '✗ You chose ' + ansStr + ' → correct: ' + keyStr;
+    }
+    return { i, status, yours: ansStr, correct: keyStr, note };
+  });
+  const at = ok + no;
+  const acc = at ? Math.round(ok / at * 100) : 0;
+  const pct = max ? Math.max(0, Math.round(score / max * 100)) : 0;
+  return { ok, no, sk, un, score, max, lost, acc, pct, rows };
+}
+const fmtMark = v => { const r = Math.round(v * 100) / 100; return Number.isInteger(r) ? String(r) : String(r); };
+
+/* ══════════ TEST ENGINE (NTA-style, staged answers) ══════════ */
+let CLK = null;
+function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function shuffleOpts(q) {
+  const order = q.o.map((_, i) => i);
+  shuffleArr(order);
+  q.o = order.map(oi => q.o[oi]);
+  q.a = q.a.map(old => order.indexOf(old));
+}
+function startTest(name, questions, marking, totalSecs, shufQ, shufO, fileName, perQSecsOverride) {
+  if (shufQ) shuffleArr(questions);
+  if (shufO) questions.forEach(q => { if (q.kind === 'mcq') shuffleOpts(q); });
+  const perQSecs = perQSecsOverride || Math.max(1, Math.round(totalSecs / questions.length));
+  TEST = {
+    id: Date.now(), name, fileName: fileName || '', questions, marking,
+    totalSecs, perQSecs, left: totalSecs,
+    answers: new Array(questions.length).fill(null),
+    marked: new Array(questions.length).fill(false),
+    visited: new Array(questions.length).fill(false),
+    timeSpent: new Array(questions.length).fill(0),
+    ci: 0, draft: { i: -1, value: null },
+    startedAt: Date.now(), qShownAt: Date.now(),
+    subjects: [...new Set(questions.map(q => q.subject || 'General'))]
+  };
+  TEST.visited[0] = true;
+  $('tName').textContent = name;
+  go('sc-test');
+  showQ(0);
+  startTimer();
+  saveProgress();
+}
+function leaveQ() {
+  if (!TEST) return;
+  TEST.timeSpent[TEST.ci] += (Date.now() - TEST.qShownAt) / 1000;
+  TEST.qShownAt = Date.now();
+}
+function curSel() {
+  if (TEST.draft.i === TEST.ci) return TEST.draft.value;
+  return TEST.answers[TEST.ci];
+}
+function setDraft(v) {
+  TEST.draft = { i: TEST.ci, value: v };
+  // Re-render selection state — except for numeric input, where re-rendering
+  // on every keystroke would steal focus from the text box.
+  if (TEST.questions[TEST.ci].kind !== 'numeric') renderOpts();
+  saveProgress();
+}
+function showQ(i) {
+  leaveQ();
+  TEST.ci = i;
+  TEST.visited[i] = true;
+  const q = TEST.questions[i];
+  $('tQNo').textContent = 'Question ' + (i + 1) + ' of ' + TEST.questions.length;
+  $('tSubj').textContent = q.subject || 'General';
+  $('tMulti').classList.toggle('hide', !q.multi);
+  $('tQText').textContent = q.q;
+  renderOpts();
+  renderPalette();
+  renderTabs();
+  $('btnSave').textContent = i === TEST.questions.length - 1 ? 'Save ✓' : 'Save & Next →';
+  $('btnPrev').disabled = i === 0;
+  TEST.qShownAt = Date.now();
+  saveProgress();
+}
+function renderOpts() {
+  const q = TEST.questions[TEST.ci], bx = $('tOpts'); bx.innerHTML = '';
+  const sel = curSel();
+  if (q.kind === 'numeric') {
+    const wrap = document.createElement('div'); wrap.className = 'num-wrap';
+    const lbl = document.createElement('div'); lbl.className = 'num-lbl'; lbl.textContent = 'Type your answer';
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.inputMode = 'numeric'; inp.className = 'num-inp';
+    inp.placeholder = 'Enter a number…'; inp.value = (sel == null ? '' : sel);
+    inp.oninput = () => { const v = inp.value.trim(); setDraft(v === '' ? null : v); };
+    wrap.append(lbl, inp); bx.appendChild(wrap);
+  } else if (q.multi) {
+    const arr = Array.isArray(sel) ? sel : [];
+    q.o.forEach((t, j) => {
+      const b = document.createElement('button'); b.className = 'opt' + (arr.includes(j) ? ' sel' : '');
+      const s = document.createElement('span'); s.className = 'ol'; s.textContent = 'ABCD'[j] || (j + 1);
+      const x = document.createElement('span'); x.dir = 'auto'; x.textContent = t; b.append(s, x);
+      b.onclick = () => { const cur = Array.isArray(curSel()) ? curSel().slice() : []; const ix = cur.indexOf(j); if (ix >= 0) cur.splice(ix, 1); else cur.push(j); setDraft(cur.length ? cur : null); };
+      bx.appendChild(b);
+    });
+  } else {
+    q.o.forEach((t, j) => {
+      const b = document.createElement('button'); b.className = 'opt' + (sel === j ? ' sel' : '');
+      const s = document.createElement('span'); s.className = 'ol'; s.textContent = 'ABCD'[j] || (j + 1);
+      const x = document.createElement('span'); x.dir = 'auto'; x.textContent = t; b.append(s, x);
+      b.onclick = () => setDraft(j);
+      bx.appendChild(b);
+    });
+  }
+}
+function palStatus(i) {
+  if (TEST.marked[i] && TEST.answers[i] !== null) return 'ansmark';
+  if (TEST.marked[i]) return 'mark';
+  if (TEST.answers[i] !== null) return 'ans';
+  if (TEST.visited[i]) return 'notans';
+  return 'notvis';
+}
+function counts() {
+  const c = { ans: 0, notans: 0, mark: 0, ansmark: 0, notvis: 0 };
+  TEST.questions.forEach((_, i) => c[palStatus(i)]++);
+  return c;
+}
+function renderPalette() {
+  const c = counts();
+  const inner = `
+    <div class="pal-counts">
+      <div class="pal-count">🟢 Answered <b>${c.ans}</b></div>
+      <div class="pal-count">🟣 Answered &amp; marked <b>${c.ansmark}</b></div>
+      <div class="pal-count">🔴 Not answered <b>${c.notans}</b></div>
+      <div class="pal-count">🟣 Marked <b>${c.mark}</b></div>
+      <div class="pal-count">⚪ Not visited <b>${c.notvis}</b></div>
+    </div>
+    <div class="pal-grid">${TEST.questions.map((_, i) => {
+      const st = palStatus(i);
+      return `<button class="pal-btn-num st-${st}${i === TEST.ci ? ' cur' : ''}" data-i="${i}">${i + 1}</button>`;
+    }).join('')}</div>
+    <div class="pal-legend">
+      <div class="lg"><span class="lg-dot g"></span>Not visited</div>
+      <div class="lg"><span class="lg-dot r"></span>Not answered</div>
+      <div class="lg"><span class="lg-dot gr"></span>Answered</div>
+      <div class="lg"><span class="lg-dot p"></span>Marked for review</div>
+      <div class="lg"><span class="lg-dot pm"></span>Answered &amp; marked</div>
+    </div>`;
+  $('palDesktop').innerHTML = inner;
+  $('palMobile').innerHTML = inner;
+  document.querySelectorAll('.pal-btn-num').forEach(b => {
+    b.onclick = () => { closeDrawer(); jumpTo(+b.dataset.i); };
+  });
+}
+function renderTabs() {
+  const tabs = $('tTabs');
+  if (TEST.subjects.length <= 1) { tabs.innerHTML = ''; tabs.style.display = 'none'; return; }
+  tabs.style.display = 'flex';
+  const cur = TEST.questions[TEST.ci].subject || 'General';
+  tabs.innerHTML = TEST.subjects.map(s => `<button class="tab${s === cur ? ' sel' : ''}" data-s="${esc(s)}">${esc(s)}</button>`).join('');
+  tabs.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      const i = TEST.questions.findIndex(q => (q.subject || 'General') === t.dataset.s);
+      if (i >= 0) jumpTo(i);
+    };
+  });
+}
+function jumpTo(i) { TEST.draft = { i: -1, value: null }; showQ(i); }
+function saveDraftIfAny() {
+  if (TEST.draft.i === TEST.ci) TEST.answers[TEST.ci] = TEST.draft.value;
+  TEST.draft = { i: -1, value: null };
+}
+$('btnSave').onclick = () => {
+  saveDraftIfAny();
+  if (TEST.ci < TEST.questions.length - 1) showQ(TEST.ci + 1);
+  else { renderPalette(); renderOpts(); saveProgress(); }
+};
+$('btnMark').onclick = () => {
+  saveDraftIfAny();
+  TEST.marked[TEST.ci] = true;
+  if (TEST.ci < TEST.questions.length - 1) showQ(TEST.ci + 1);
+  else { renderPalette(); saveProgress(); }
+};
+$('btnClear').onclick = () => {
+  TEST.answers[TEST.ci] = null; TEST.draft = { i: -1, value: null };
+  renderOpts(); renderPalette(); saveProgress();
+};
+$('btnPrev').onclick = () => { if (TEST.ci > 0) jumpTo(TEST.ci - 1); };
+
+/* ── timer: total countdown, auto-submit at zero. showQ() never touches it,
+   so tapping an option can never reset the timer. ── */
+function startTimer() {
+  clearInterval(CLK);
+  updateTimerUI();
+  CLK = setInterval(() => {
+    TEST.left--;
+    updateTimerUI();
+    if (TEST.left <= 0) finishTest('time');
+  }, 1000);
+}
+function updateTimerUI() {
+  $('tTimer').textContent = fmtTime(TEST.left);
+  $('tTimerBox').classList.toggle('low', TEST.left <= 300);
+}
+
+/* ── submit ── */
+$('tSubmit').onclick = () => {
+  leaveQ();
+  const c = counts();
+  $('smCounts').innerHTML = `Answered: <b>${c.ans}</b><br>Answered &amp; marked: <b>${c.ansmark}</b><br>Not answered: <b>${c.notans}</b><br>Marked for review: <b>${c.mark}</b><br>Not visited: <b>${c.notvis}</b><br>Total questions: <b>${TEST.questions.length}</b>`;
+  $('submitModal').classList.add('on');
+};
+$('btnCancelSubmit').onclick = () => { $('submitModal').classList.remove('on'); TEST.qShownAt = Date.now(); };
+$('btnConfirmSubmit').onclick = () => { $('submitModal').classList.remove('on'); finishTest('submit'); };
+
+/* ── finish ── */
+function finishTest(reason) {
+  clearInterval(CLK);
+  $('submitModal').classList.remove('on');
+  if (!TEST) return;
+  leaveQ();
+  const stats = scoreTest(TEST.questions, TEST.answers, TEST.marking);
+  const totalTime = TEST.timeSpent.reduce((a, b) => a + b, 0);
+  RESULT = {
+    id: TEST.id, date: Date.now(), name: TEST.name, fileName: TEST.fileName,
+    questions: TEST.questions, answers: TEST.answers, timeSpent: TEST.timeSpent,
+    marking: TEST.marking, totalSecs: TEST.totalSecs, perQSecs: TEST.perQSecs,
+    stats: { ...stats, totalTime, avgTime: TEST.questions.length ? totalTime / TEST.questions.length : 0 }
+  };
+  HIST.unshift(RESULT);
+  HIST = HIST.slice(0, 50);
+  saveHist();
+  clearProgress();
+  TEST = null;
+  renderResult(RESULT, false);
+  go('sc-result');
+}
+
+/* ══════════ RESULT ══════════ */
+function renderResult(res, saved) {
+  RESULT = res;
+  $('rSavedNote').classList.toggle('hide', !saved);
+  $('rTestName').textContent = res.name;
+  $('rScore').textContent = fmtMark(res.stats.score);
+  $('rMax').textContent = ' / ' + fmtMark(res.stats.max);
+  const pc = res.stats.pct;
+  $('rMsg').textContent = pc >= 80 ? 'Outstanding! 🎉' : pc >= 60 ? 'Well done! 💪' : pc >= 40 ? 'Good effort 📚' : 'Keep practicing! 📖';
+  $('rMsg').style.color = pc >= 60 ? 'var(--green)' : pc >= 40 ? 'var(--amber)' : 'var(--red)';
+  $('rSub').textContent = `${res.stats.ok} correct · ${res.stats.no} wrong · ${res.stats.sk} skipped${res.stats.un ? ` · ${res.stats.un} without key` : ''} — out of ${res.questions.length} questions`;
+  $('rOk').textContent = res.stats.ok;
+  $('rNo').textContent = res.stats.no;
+  $('rSk').textContent = res.stats.sk;
+  $('rUn').textContent = res.stats.un;
+  $('rAcc').textContent = res.stats.acc + '%';
+  $('rLost').textContent = fmtMark(res.stats.lost);
+  $('rTime').textContent = fmtTime(res.stats.totalTime);
+  $('rAvg').textContent = fmtTime(res.stats.avgTime);
+  $('rPct').textContent = res.stats.pct + '%';
+  // slowest / fastest 5 (only questions actually spent time on)
+  const timed = res.questions.map((q, i) => ({ n: q.n, q: q.q, t: res.timeSpent[i] || 0 })).filter(r => r.t > 0.5);
+  const slow = timed.slice().sort((a, b) => b.t - a.t).slice(0, 5);
+  const fast = timed.slice().sort((a, b) => a.t - b.t).slice(0, 5);
+  const timeRow = r => `<div class="time-row"><span class="tq">Q${r.n} — ${esc(r.q.slice(0, 60))}${r.q.length > 60 ? '…' : ''}</span><span class="tt2">${fmtTime(r.t)}</span></div>`;
+  $('rSlow').innerHTML = slow.length ? slow.map(timeRow).join('') : '<div class="empty">No timing data.</div>';
+  $('rFast').innerHTML = fast.length ? fast.map(timeRow).join('') : '<div class="empty">No timing data.</div>';
+  // review
+  const L = $('rList'); L.innerHTML = '';
+  res.stats.rows.forEach(row => {
+    const q = res.questions[row.i];
+    const d = document.createElement('div');
+    d.className = 'ritem ' + (row.status === 'correct' ? 'ok' : row.status === 'wrong' ? 'no' : 'sk');
+    const chip = row.status === 'correct' ? '✓ Correct' : row.status === 'wrong' ? '✗ Wrong' : row.status === 'skipped' ? 'Skipped' : 'No key';
+    const chipCls = row.status === 'correct' ? 'ok' : row.status === 'wrong' ? 'no' : 'sk';
+    const head = document.createElement('div'); head.className = 'ri-head';
+    const qno = document.createElement('span'); qno.className = 'ri-qno'; qno.textContent = 'Q' + q.n + (q.subject && q.subject !== 'General' ? ' · ' + q.subject : '');
+    const ch = document.createElement('span'); ch.className = 'ri-chip ' + chipCls; ch.textContent = chip;
+    head.append(qno, ch); d.appendChild(head);
+    const qq = document.createElement('div'); qq.className = 'ri-q'; qq.dir = 'auto'; qq.textContent = q.q; d.appendChild(qq);
+    if (q.kind === 'mcq') {
+      const oo = document.createElement('div'); oo.className = 'ri-opts'; oo.dir = 'auto';
+      oo.textContent = q.o.map((o, j) => 'ABCD'[j] + '. ' + o).join('  ·  ');
+      d.appendChild(oo);
+    }
+    const vv = document.createElement('div'); vv.className = 'ri-a ' + chipCls; vv.textContent = row.note; d.appendChild(vv);
+    const tm = document.createElement('div'); tm.className = 'ri-time'; tm.textContent = 'Time spent: ' + fmtTime(res.timeSpent[row.i] || 0); d.appendChild(tm);
+    L.appendChild(d);
+  });
+  $('btnRetryWrong').disabled = res.stats.no === 0;
+}
+function viewResult(h, saved) { renderResult(h, saved); go('sc-result'); }
+function retake(shuffle) {
+  const qs = RESULT.questions.map(q => ({ ...q, o: [...q.o], a: [...q.a] }));
+  startTest(RESULT.name, qs, { ...RESULT.marking }, RESULT.totalSecs, shuffle, shuffle, RESULT.fileName, RESULT.perQSecs);
+}
+$('btnRetake').onclick = () => retake(false);
+$('btnRetakeShuf').onclick = () => retake(true);
+$('btnRetryWrong').onclick = () => {
+  const wrongIdx = RESULT.stats.rows.filter(r => r.status === 'wrong').map(r => r.i);
+  if (!wrongIdx.length) return;
+  const qs = wrongIdx.map(i => { const q = RESULT.questions[i]; return { ...q, o: [...q.o], a: [...q.a] }; });
+  startTest(RESULT.name + ' — wrong only', qs, { ...RESULT.marking }, wrongIdx.length * RESULT.perQSecs, false, false, RESULT.fileName, RESULT.perQSecs);
+};
+
+/* ══════════ RESUME (reload restores the in-progress test) ══════════ */
+function saveProgress() {
+  if (!TEST) return;
+  try { localStorage.setItem(LS_PROG, JSON.stringify({ ...TEST, left: TEST.left, draft: TEST.draft })); } catch (e) { /* best-effort */ }
+}
+function inProgress() { try { return !!localStorage.getItem(LS_PROG); } catch (e) { return false; } }
+function clearProgress() { try { localStorage.removeItem(LS_PROG); } catch (e) {} }
+function checkResume() {
+  const card = $('resumeCard');
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(LS_PROG) || 'null'); } catch (e) {}
+  if (!saved || !saved.questions || !saved.questions.length) { card.classList.add('hide'); return; }
+  card.classList.remove('hide');
+  $('resumeMeta').textContent = `${saved.name} · ${saved.questions.length} questions · ${fmtTime(saved.left)} left`;
+}
+$('btnResume').onclick = () => {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(LS_PROG) || 'null'); } catch (e) {}
+  if (!saved) return;
+  TEST = saved;
+  TEST.qShownAt = Date.now();
+  $('tName').textContent = TEST.name;
+  go('sc-test');
+  showQ(TEST.ci || 0);
+  startTimer();
+};
+$('btnDiscardResume').onclick = () => { clearProgress(); checkResume(); };
+
+/* ══════════ PALETTE DRAWER (mobile) ══════════ */
+function closeDrawer() { $('palDrawer').classList.remove('on'); $('drawerBack').classList.remove('on'); }
+$('palToggle').onclick = () => { $('palDrawer').classList.add('on'); $('drawerBack').classList.add('on'); };
+$('palClose').onclick = closeDrawer;
+$('drawerBack').onclick = closeDrawer;
+
+/* ══════════ INIT ══════════ */
+loadHist();
+renderHomeHist();
+checkResume();
+</script>
+</body>
+</html>
