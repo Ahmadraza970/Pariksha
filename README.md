@@ -24,7 +24,7 @@
 - **Check & fix before you start** — preview every question and correct the answer key if anything was misread.
 - **Questions & answer key separately (new in v1.1)** — questions in one PDF and the answer key somewhere else? Add the key on its own: upload a separate key PDF, or simply type it in (e.g. `1-B 2-A 3-D`).
 - **v1.1.1 fix:** book-style keys like `1. (A)  2. (B)  20. (B, D)` are now accepted, and scanned (photo/DocScan) PDFs in the separate key/questions flow are read with OCR instead of being rejected.
-- **Answer key first (new in v1.2 — in preview, not released yet):** the home screen now leads with the answer key — upload any DPP and the full key appears first as a clean Q→answer table with one-tap copy, then start the mock test when you're ready. Saved tests are searchable by name, and tapping one opens its key.
+- **Answer key first (new in v1.2):** the home screen now leads with the answer key — upload any DPP and the full key appears first as a clean Q→answer table with one-tap copy, then start the mock test when you're ready. Saved tests are searchable by name, and tapping one opens its key.
 - **Your history stays on your device** — previous tests are saved locally so you can retake them anytime.
 
 ## How to use
