@@ -10,7 +10,7 @@
 **Pariksha** is a free app for JEE / NEET aspirants. Upload a DPP (Daily Practice Paper) PDF and take it as a real, timed mock test — with the same look and feel as the NTA exam screen.
 
 - **Website / Download:** https://pariksha-app-murex.vercel.app/
-- **Android APK:** see [Releases](../../releases) — `Pariksha-release.apk` (v1.1.1, 10.2 MB)
+- **Android APK:** see [Releases](../../releases) — `Pariksha-release.apk` (v1.2.0, 10.2 MB)
 - **v1.1 note:** if v1.0 is already installed, uninstall it once before installing v1.1 — v1.1 is signed with a fresh key (the original signing key was not recoverable). Future updates will install normally over v1.1.
 
 ## Features
