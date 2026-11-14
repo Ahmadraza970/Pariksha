@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>DPP Mock Test — Turn any DPP into a real mock test</title>
+<title>DPP Mock Test — Answer key first, mock test next</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="pdf.min.js"></script>
@@ -146,6 +146,18 @@ input, select, textarea { font-family: inherit; }
 .hist-item .hi-score { font-weight: 800; font-size: 15px; white-space: nowrap; }
 .hist-item .hi-score small { color: var(--ink3); font-weight: 600; font-size: 12px; }
 .empty { color: var(--ink3); font-size: 13px; padding: 10px 2px; }
+.hist-search { width: 100%; padding: 13px 15px; border: 2px solid var(--line); border-radius: 12px; font-size: 14px; background: var(--card); color: var(--ink); margin-bottom: 10px; }
+.hist-search:focus { outline: none; border-color: var(--accent); }
+
+/* ===== ANSWER KEY VIEW (v1.2 — answer key first) ===== */
+.key-counts { font-size: 14px; line-height: 1.7; color: var(--ink2); }
+.key-counts b { color: var(--ink); font-size: 16px; }
+.key-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin-top: 14px; }
+.key-cell { background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 10px 8px; text-align: center; box-shadow: var(--shadow); }
+.key-cell .kq { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--ink3); text-transform: uppercase; }
+.key-cell .ka { font-size: 20px; font-weight: 900; margin-top: 2px; overflow-wrap: break-word; }
+.key-cell.nokey { opacity: .55; border-style: dashed; }
+.key-cell.nokey .ka { color: var(--ink3); }
 
 /* ===== PREVIEW ===== */
 .pv-summary { font-size: 15px; line-height: 1.7; }
@@ -337,13 +349,13 @@ input, select, textarea { font-family: inherit; }
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen on" id="sc-home">
   <div class="top">
-    <div class="logo"><div class="logo-mark">D</div><div><div class="logo-name">DPP Mock Test</div><div class="logo-sub">Upload · Test · Analyse</div></div></div>
+    <div class="logo"><div class="logo-mark">D</div><div><div class="logo-name">DPP Mock Test</div><div class="logo-sub">Key first · Test · Analyse</div></div></div>
     <div class="badge">✦ Free</div>
   </div>
   <div class="hero">
     <div class="kicker">JEE · NEET · Boards</div>
-    <h1>Turn any DPP into a <em>real mock test</em></h1>
-    <p>Upload your DPP PDF — answer key on the last page. It becomes a timed, NTA-style test with a question palette, marking and instant analysis.</p>
+    <h1>Your answer key, <em>in seconds</em></h1>
+    <p>Upload any DPP PDF and see the full answer key first — copy it, check it, then take it as a timed, NTA-style mock test whenever you're ready.</p>
   </div>
 
   <div class="card hide" id="resumeCard">
@@ -359,7 +371,7 @@ input, select, textarea { font-family: inherit; }
     <div class="upload-inner" id="dz">
       <div class="u-icon">📄</div>
       <div class="u-title">Drop your DPP here</div>
-      <div class="u-sub">or tap to choose a file<br>Answer key should be on the last page</div>
+      <div class="u-sub">or tap to choose a file<br>See the answer key first — the key should be on the last page</div>
       <div class="u-formats"><span>PDF only</span><span>Q1…QN format</span><span>(A)(B)(C)(D)</span><span>Hindi · English · اردو</span></div>
       <input type="file" id="fi" accept=".pdf,application/pdf">
       <div class="file-info" id="fileInfo">No file chosen yet</div>
@@ -396,17 +408,42 @@ input, select, textarea { font-family: inherit; }
 
   <div class="section-title">How it works</div>
   <div class="steps">
-    <div class="step"><div class="step-n">1</div><div><div class="step-t">Upload DPP</div><div class="step-d">Questions and the answer key are read automatically — Hindi, English and Urdu.</div></div></div>
+    <div class="step"><div class="step-n">1</div><div><div class="step-t">Answer key first</div><div class="step-d">Upload your DPP — the full key appears in seconds. Copy it, or check it question by question. Hindi, English and Urdu.</div></div></div>
     <div class="step"><div class="step-n">2</div><div><div class="step-t">Check &amp; fix</div><div class="step-d">Preview every question, fix anything misread, set the key — then start.</div></div></div>
     <div class="step"><div class="step-n">3</div><div><div class="step-t">Take the test</div><div class="step-d">NTA-style timer, palette and marking. Score, accuracy and time analysis at the end.</div></div></div>
   </div>
 
   <div class="section-title">Your tests</div>
-  <div class="section-sub">Saved on this device only. Tap any test to see its result again.</div>
+  <div class="section-sub">Saved on this device only. Tap any test to see its answer key.</div>
+  <input type="search" class="hist-search" id="histSearch" placeholder="🔍 Search your tests by name…" autocomplete="off">
   <div id="histList"></div>
   <button class="linkbtn" id="btnViewAll">View all history →</button>
 
   <div class="note" style="margin-top:22px">🔒 <b>Private by design.</b> Your PDFs and answers never leave this device. No account, no server, no upload — everything is read and scored inside your browser.</div>
+</div>
+
+<!-- ═══════════ ANSWER KEY (v1.2 — key first) ═══════════ -->
+<div class="screen" id="sc-key">
+  <div class="top">
+    <div class="logo"><div class="logo-mark">D</div><div><div class="logo-name">DPP Mock Test</div><div class="logo-sub">Answer key</div></div></div>
+  </div>
+  <div class="card">
+    <h3>🔑 Answer key</h3>
+    <div class="pv-title" id="kvTitle" dir="auto"></div>
+    <div class="key-counts" id="kvCounts">–</div>
+    <div class="key-grid" id="kvGrid"></div>
+  </div>
+  <div class="warn" id="kvWarn"></div>
+  <div class="note" id="kvNote"></div>
+  <button class="btn acc" id="btnCopyKey">📋 Copy key</button>
+  <div id="kvFreshBtns">
+    <button class="btn" id="btnKeyStart" style="margin-top:10px">Start mock test →</button>
+    <button class="btn line" id="btnKeyPreview">Check &amp; fix in preview</button>
+  </div>
+  <div id="kvHistBtns" class="hide">
+    <button class="btn" id="btnKeyResult" style="margin-top:10px">View result →</button>
+  </div>
+  <button class="btn line" id="btnKeyHome">← Back to home</button>
 </div>
 
 <!-- ═══════════ PREVIEW ═══════════ -->
@@ -568,6 +605,7 @@ input, select, textarea { font-family: inherit; }
     <button class="btn acc" id="btnRetake">↻ Retake (same order)</button>
     <button class="btn line" id="btnRetakeShuf">↻ Retake shuffled</button>
     <button class="btn line" id="btnRetryWrong">↻ Retry only the wrong ones</button>
+    <button class="btn line" id="btnViewKey">🔑 View answer key</button>
     <button class="btn line" id="btnHome2">← Back to home</button>
   </div>
 </div>
@@ -578,7 +616,7 @@ input, select, textarea { font-family: inherit; }
     <div class="logo"><div class="logo-mark">D</div><div><div class="logo-name">DPP Mock Test</div><div class="logo-sub">History</div></div></div>
   </div>
   <div class="section-title">All tests</div>
-  <div class="section-sub">Saved on this device only. Tap any test to see its result again.</div>
+  <div class="section-sub">Saved on this device only. Tap any test to see its answer key.</div>
   <div id="histFull"></div>
   <button class="btn line danger" id="btnClearHist" style="color:var(--red)">Clear all history</button>
   <button class="btn line" id="btnBackHome2">← Back to home</button>
@@ -590,7 +628,7 @@ if (typeof pdfjsLib !== 'undefined')
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
 
 const $ = id => document.getElementById(id);
-const SCR = ['sc-home','sc-preview','sc-setup','sc-test','sc-result','sc-history'];
+const SCR = ['sc-home','sc-key','sc-preview','sc-setup','sc-test','sc-result','sc-history'];
 const go = id => { SCR.forEach(s => $(s).classList.remove('on')); $(id).classList.add('on'); window.scrollTo(0,0); };
 const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const fmtTime = s => { s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), ss=s%60; return h? `${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}` : `${m}:${String(ss).padStart(2,'0')}`; };
@@ -997,8 +1035,8 @@ async function load(f) {
     }
     PV = { fileName: f.name, title: res.title, questions: res.questions, dropped: res.dropped, unmapped: res.unmapped, unmappedResidual: res.unmappedResidual, repaired: res.repaired, hasKey: res.hasKey };
     msg(`✅ ${res.questions.length} questions read!` + (res.hasKey ? '' : ' — no answer key found in this PDF; add keys by hand in the preview.'), 'ok');
-    renderPreview();
-    go('sc-preview');
+    showKeyView(PV.title || PV.fileName, PV.questions, 'fresh');
+    go('sc-key');
   } catch (e) { console.error(e); msg('❌ ' + e.message, 'err'); }
 }
 
@@ -1080,8 +1118,8 @@ async function runOCR(pdf, f) {
     }
     PV = { fileName: f.name, title: res.title, questions: res.questions, dropped: res.dropped, unmapped: res.unmapped, unmappedResidual: res.unmappedResidual, repaired: res.repaired, hasKey: res.hasKey, ocr: true };
     msg(`✅ OCR read ${res.questions.length} questions!` + (res.hasKey ? '' : ' — no answer key found; add keys by hand in the preview.'), 'ok');
-    renderPreview();
-    go('sc-preview');
+    showKeyView(PV.title || PV.fileName, PV.questions, 'fresh');
+    go('sc-key');
   } catch (e) { console.error(e); prog.style.display = 'none'; msg('❌ OCR failed: ' + e.message, 'err'); }
 }
 
@@ -1217,9 +1255,102 @@ $('sepGo').addEventListener('click', () => {
   });
   PV = { fileName: SEP.fileName, title: SEP.title, questions, dropped: SEP.dropped || [], unmapped: SEP.unmapped || 0, unmappedResidual: SEP.unmappedResidual, repaired: SEP.repaired, hasKey: applied > 0, separateKey: true };
   msg(`✅ ${questions.length} questions + alag se di gayi key (${SEP.keySrc}) — ${applied} answers lag gaye` + (skipped ? `, ${skipped} match nahi hue` : '') + '.', 'ok');
-  renderPreview();
-  go('sc-preview');
+  showKeyView(PV.title || PV.fileName, PV.questions, 'fresh');
+  go('sc-key');
 });
+
+/* ══════════ ANSWER KEY VIEW (v1.2 — answer key first) ══════════ */
+// The key view is the first thing a student sees after ANY successful PDF
+// read (main upload, OCR, or the separate questions+key flow), and the
+// first thing they see when they tap a saved test in history. It reuses
+// the already-parsed questions — no parsing is redone here.
+// History RESULT objects already store the full questions array (with
+// a / hasKey / numAns), so every saved test — old and new — can show
+// its key; no history-format change was needed.
+let KV = null; // {title, questions, from: 'fresh'|'history', hist: RESULT|null}
+function keyStrOf(q) {
+  if (!q.hasKey) return null;
+  if (q.kind === 'numeric') return q.numAns == null ? null : String(q.numAns);
+  if (q.a && q.a.length) return q.a.map(x => 'ABCD'[x] || (x + 1)).join(', ');
+  return null;
+}
+// Same format the "type your key" box accepts, so a copied key can be
+// pasted straight back into the separate-key flow.
+function keyCopyText(questions) {
+  return questions.filter(q => keyStrOf(q) !== null).map(q => {
+    if (q.kind === 'numeric' || q.multi) return `Q${q.n} (${keyStrOf(q)})`;
+    return `${q.n}-${keyStrOf(q)}`;
+  }).join(' ');
+}
+function renderKeyView() {
+  const kv = KV;
+  $('kvTitle').textContent = kv.title || '';
+  const keyed = kv.questions.filter(q => keyStrOf(q) !== null).length;
+  const total = kv.questions.length;
+  $('kvCounts').innerHTML = `<b>${total}</b> questions · <b>${keyed}</b> with key` + (total - keyed ? ` · <b>${total - keyed}</b> without key` : '');
+  const grid = $('kvGrid'); grid.innerHTML = '';
+  kv.questions.forEach(q => {
+    const k = keyStrOf(q);
+    const cell = document.createElement('div');
+    cell.className = 'key-cell' + (k === null ? ' nokey' : '');
+    const l = document.createElement('div'); l.className = 'kq'; l.textContent = 'Q' + q.n;
+    const v = document.createElement('div'); v.className = 'ka'; v.textContent = k === null ? '—' : k;
+    cell.append(l, v); grid.appendChild(cell);
+  });
+  const warns = [];
+  if (!keyed) warns.push('⚠️ No answer key found — add keys by hand in the preview, or the test will run without scoring.');
+  else if (total - keyed) warns.push(`⚠️ ${total - keyed} question(s) have no key — add them by hand in the preview if you want them scored.`);
+  $('kvWarn').textContent = warns.join(' ');
+  $('kvNote').textContent = kv.from === 'fresh'
+    ? '🔑 This is your key, read straight from the PDF. Copy it, or start the mock test below.'
+    : '🔑 Key from your saved test. Tap "View result" to see your score and review.';
+  $('kvFreshBtns').classList.toggle('hide', kv.from !== 'fresh');
+  $('kvHistBtns').classList.toggle('hide', kv.from !== 'history');
+  $('btnCopyKey').disabled = keyed === 0;
+  $('btnCopyKey').textContent = keyed ? '📋 Copy key' : '📋 Copy key (no key yet)';
+}
+function showKeyView(title, questions, from, hist) {
+  // Sort a COPY by question number — the source order (PV / RESULT) is untouched.
+  KV = { title, questions: [...(questions || [])].sort((a, b) => a.n - b.n), from, hist: hist || null };
+  renderKeyView();
+}
+async function copyKey() {
+  if (!KV) return;
+  const text = keyCopyText(KV.questions);
+  if (!text) return;
+  const btn = $('btnCopyKey');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+    else throw new Error('no clipboard API');
+  } catch (e) {
+    // Fallback for older WebViews: hidden textarea + execCommand.
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e2) { /* clipboard unavailable */ }
+    ta.remove();
+  }
+  btn.textContent = '✅ Copied!';
+  setTimeout(() => { if (KV) btn.textContent = '📋 Copy key'; }, 2000);
+}
+$('btnCopyKey').onclick = copyKey;
+$('btnKeyPreview').onclick = () => { renderPreview(); go('sc-preview'); };
+$('btnKeyStart').onclick = () => {
+  // Fast path to setup — but the preview's validation still applies:
+  // render the preview (builds the edit cards), check for bad questions,
+  // and fall back to the preview screen if any need fixing.
+  renderPreview();
+  const bad = findBadQuestions();
+  if (bad.length) { showBadQuestions(bad); go('sc-preview'); return; }
+  buildSetup();
+  go('sc-setup');
+};
+$('btnKeyResult').onclick = () => { if (KV && KV.hist) viewResult(KV.hist, true); };
+$('btnKeyHome').onclick = () => {
+  if (KV && KV.from === 'fresh') { PV = null; fi.value = ''; msg('', ''); }
+  KV = null;
+  renderHomeHist(); checkResume(); go('sc-home');
+};
 
 /* ══════════ PREVIEW (check & fix) ══════════ */
 // Compact counts for the sticky bar: the full summary is too long for a
@@ -1352,20 +1483,26 @@ $('btnAddQ').onclick = () => {
   renderPreview();
   const el = $('pv-' + (PV.questions.length - 1)); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
-function goToSetup() {
+// Shared by the preview's Continue button and the key view's fast path
+// ("Start mock test" skips the preview screen but not its validation).
+function findBadQuestions() {
   const bad = [];
   PV.questions.forEach((q, i) => {
-    const card = $('pv-' + i); if (card) card.classList.remove('bad');
     if (!q.q.trim()) bad.push(i);
     else if (q.kind === 'mcq' && q.o.filter(o => o.trim()).length < 2) bad.push(i);
   });
-  if (bad.length) {
-    bad.forEach(i => { const c = $('pv-' + i); if (c) c.classList.add('bad'); });
-    $('pvErr').textContent = `Fix ${bad.length} question(s) first — empty question or fewer than 2 options (or delete them).`;
-    $('pvStickyErr').textContent = $('pvErr').textContent;
-    const c = $('pv-' + bad[0]); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return;
-  }
+  return bad;
+}
+function showBadQuestions(bad) {
+  bad.forEach(i => { const c = $('pv-' + i); if (c) c.classList.add('bad'); });
+  $('pvErr').textContent = `Fix ${bad.length} question(s) first — empty question or fewer than 2 options (or delete them).`;
+  $('pvStickyErr').textContent = $('pvErr').textContent;
+  const c = $('pv-' + bad[0]); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function goToSetup() {
+  PV.questions.forEach((q, i) => { const card = $('pv-' + i); if (card) card.classList.remove('bad'); });
+  const bad = findBadQuestions();
+  if (bad.length) { showBadQuestions(bad); return; }
   buildSetup();
   go('sc-setup');
 }
@@ -1432,12 +1569,18 @@ function histRow(h, onOpen) {
 function renderHomeHist() {
   const list = $('histList'); list.innerHTML = '';
   if (!HIST.length) { list.innerHTML = '<div class="empty">No tests yet — upload your first DPP above.</div>'; return; }
-  HIST.slice(0, 5).forEach(h => list.appendChild(histRow(h, () => viewResult(h, true))));
+  const q = ($('histSearch').value || '').trim().toLowerCase();
+  // No query: the 5 most recent. Query: every match, so the test you
+  // searched for is always one tap away.
+  const items = q ? HIST.filter(h => (h.name || '').toLowerCase().includes(q)) : HIST.slice(0, 5);
+  if (!items.length) { list.innerHTML = '<div class="empty">No tests match "' + esc(q) + '".</div>'; return; }
+  items.forEach(h => list.appendChild(histRow(h, () => { showKeyView(h.name, h.questions, 'history', h); go('sc-key'); })));
 }
+$('histSearch').addEventListener('input', renderHomeHist);
 function renderFullHist() {
   const list = $('histFull'); list.innerHTML = '';
   if (!HIST.length) { list.innerHTML = '<div class="empty">No tests yet.</div>'; return; }
-  HIST.forEach(h => list.appendChild(histRow(h, () => viewResult(h, true))));
+  HIST.forEach(h => list.appendChild(histRow(h, () => { showKeyView(h.name, h.questions, 'history', h); go('sc-key'); })));
 }
 $('btnViewAll').onclick = () => { renderFullHist(); go('sc-history'); };
 $('btnBackHome2').onclick = () => { renderHomeHist(); go('sc-home'); };
@@ -1445,7 +1588,7 @@ $('btnClearHist').onclick = () => {
   if (!confirm('Clear all saved test history?')) return;
   HIST = []; saveHist(); renderFullHist(); renderHomeHist();
 };
-$('btnHome2').onclick = () => { renderHomeHist(); checkResume(); go('sc-home'); };
+$('btnHome2').onclick = () => { fi.value = ''; renderHomeHist(); checkResume(); go('sc-home'); };
 
 /* ══════════ SCORING (pure — same rules as the fixed app) ══════════
    Multi-correct is all-or-nothing. Unkeyed questions are "unverified":
@@ -1767,6 +1910,7 @@ function retake(shuffle) {
 }
 $('btnRetake').onclick = () => retake(false);
 $('btnRetakeShuf').onclick = () => retake(true);
+$('btnViewKey').onclick = () => { if (RESULT) { showKeyView(RESULT.name, RESULT.questions, 'history', RESULT); go('sc-key'); } };
 $('btnRetryWrong').onclick = () => {
   const wrongIdx = RESULT.stats.rows.filter(r => r.status === 'wrong').map(r => r.i);
   if (!wrongIdx.length) return;
